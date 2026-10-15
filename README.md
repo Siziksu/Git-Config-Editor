@@ -27,6 +27,11 @@ This extension contributes the following settings/views:
 
 ## Release Notes
 
+### 1.1.1
+
+- **Fixed Initialization Race Condition:** Solved an issue where the active branch name appeared empty or failed to load when VS Code opened directly into the extension view before the built-in Git extension finished indexing the workspace.
+- **Brand New Extension Icon:** Refreshed the extension's visual identity with a brand new, cleaner, and modern custom icon for the VS Code Marketplace.
+
 ### 1.1.0
 
 - **Hierarchical Collapsible Views:** Reorganized the entire sidebar into 3 clean, expandable categories (`Repository`, `Identity`, and `Configuration`) to improve visual structure and clean clutter.

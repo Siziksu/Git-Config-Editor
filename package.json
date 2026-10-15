@@ -2,7 +2,7 @@
   "name": "git-config-info",
   "displayName": "Git Config Info",
   "description": "Displays Git information for the current project in the sidebar",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "publisher": "siziksu",
   "icon": "images/icon.png",
   "repository": {

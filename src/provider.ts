@@ -43,6 +43,10 @@ export class GitDataProvider implements vscode.TreeDataProvider<GitItem> {
     if (gitExtension) {
       this.gitAPI = gitExtension.getAPI(1)
       this.gitAPI.onDidChangeState(() => this.refresh())
+      this.gitAPI.onDidOpenRepository((repo) => {
+        this.refresh()
+        repo.state.onDidChange(() => this.refresh())
+      })
       this.gitAPI.repositories.forEach((repo) => {
         repo.state.onDidChange(() => this.refresh())
       })
