@@ -4,11 +4,11 @@ A clean and intuitive Visual Studio Code extension that displays the current pro
 
 ## Features
 
-- 🌿 **Active Branch:** Displays the name of the branch you are currently working on.
-- 🔗 **Remote URL:** Shows the `origin` fetch URL. Click to open it directly in your web browser (supports automatic SSH to HTTPS conversion for GitHub/GitLab).
-- 👤 **User Name:** Displays the local or global `user.name` configured for Git. Click to copy.
-- ✉️ **User Email:** Displays the local or global `user.email` configured for Git. Click to copy.
-- 🔄 **Live Reactivity & Manual Refresh:** Automatically updates whenever you switch branches or make changes, with a manual refresh button available in the view toolbar.
+- **Active Branch:** Displays the name of the branch you are currently working on.
+- **Remote URL:** Shows the `origin` fetch URL. Click to open it directly in your web browser (supports automatic SSH to HTTPS conversion for GitHub/GitLab).
+- **User Name:** Displays the local or global `user.name` configured for Git. Click to copy.
+- **User Email:** Displays the local or global `user.email` configured for Git. Click to copy.
+- **Live Reactivity & Manual Refresh:** Automatically updates whenever you switch branches or make changes, with a manual refresh button available in the view toolbar.
 
 ## Requirements
 
@@ -27,12 +27,19 @@ This extension contributes the following settings/views:
 
 ## Release Notes
 
+### 1.1.0
+
+- **Hierarchical Collapsible Views:** Reorganized the entire sidebar into 3 clean, expandable categories (`Repository`, `Identity`, and `Configuration`) to improve visual structure and clean clutter.
+- **Interactive Configuration Toggles:** Added inline switch-like behavior for `Rebase`, `IgnoreCase`, and `Rerere` inside the new Configuration group.
+- **Inline Row Actions:** Added hover button interactions to execute `git config` modifiers instantly without leaving the panel.
+- **Dynamic Codicons:** Implemented visual checkbox indicators (`pass-filled` for true and `circle-outline` for false) reflecting real-time Git status changes.
+
 ### 1.0.1
 
 - Added a custom extension icon.
-- ⚙️ **Rebase** Displays the local or global `pull.rebase` configured for Git.
-- ⚙️ **Rerere** Displays the local or global `rerere.enabled` configured for Git.
-- ⚙️ **IgnoreCase** Displays the local or global `core.ignorecase` configured for Git.
+- **Rebase:** Displays the local or global `pull.rebase` configured for Git.
+- **Rerere:** Displays the local or global `rerere.enabled` configured for Git.
+- **IgnoreCase:** Displays the local or global `core.ignorecase` configured for Git.
 
 ### 1.0.0
 

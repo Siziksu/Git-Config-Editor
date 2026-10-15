@@ -2,9 +2,9 @@
   "name": "git-config-info",
   "displayName": "Git Config Info",
   "description": "Displays Git information for the current project in the sidebar",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "publisher": "siziksu",
-  "icon": "images/icon.png", 
+  "icon": "images/icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/Siziksu/Git-Config-Info"
@@ -28,6 +28,12 @@
         "title": "Refresh",
         "category": "Git Config Info",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "git-config-info.toggleGitConfig",
+        "title": "Toggle",
+        "category": "Git Config Info",
+        "icon": "$(sync)"
       }
     ],
     "viewsContainers": {
@@ -54,6 +60,13 @@
           "command": "git-config-info.refreshGitDetails",
           "when": "view == gitDetailsView",
           "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "git-config-info.toggleGitConfig",
+          "when": "view == gitDetailsView && viewItem == toggleConfig",
+          "group": "inline"
         }
       ]
     }

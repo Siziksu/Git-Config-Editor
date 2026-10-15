@@ -12,18 +12,28 @@ class GitItem extends vscode.TreeItem {
   constructor(
     public readonly label: string,
     public readonly description: string | undefined,
-    icon: string,
-    tooltip: string | undefined,
-    command: vscode.Command | undefined
+    public readonly icon: string | undefined,
+    public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+    public readonly tooltip?: string,
+    public readonly command?: vscode.Command,
+    public readonly key?: string,
+    public readonly children?: GitItem[]
   ) {
-    super(label, vscode.TreeItemCollapsibleState.None)
-    this.description = description ?? UNKNOWN
-    this.iconPath = new vscode.ThemeIcon(icon)
+    super(label, collapsibleState)
+    this.description = description
+    if (icon) this.iconPath = new vscode.ThemeIcon(icon)
     if (tooltip) this.tooltip = tooltip
     if (command) this.command = command
+    if (key) this.contextValue = 'toggleConfig'
   }
 }
-const ERROR_ITEM = new GitItem('Warning', 'Git extension not available', 'warning', undefined, undefined)
+
+const ERROR_ITEM = new GitItem(
+  'Warning',
+  'Git extension not available',
+  'warning',
+  vscode.TreeItemCollapsibleState.None
+)
 
 export class GitDataProvider implements vscode.TreeDataProvider<GitItem> {
   gitAPI: API | null = null
@@ -39,7 +49,6 @@ export class GitDataProvider implements vscode.TreeDataProvider<GitItem> {
     }
   }
 
-  // Event required to notify VS Code to refresh the interface
   private _onDidChangeTreeData: vscode.EventEmitter<GitItem | undefined | null | void> = new vscode.EventEmitter<
     GitItem | undefined | null | void
   >()
@@ -54,11 +63,14 @@ export class GitDataProvider implements vscode.TreeDataProvider<GitItem> {
   }
 
   async getChildren(element?: GitItem): Promise<GitItem[]> {
-    if (element) return [ERROR_ITEM]
     if (this.gitAPI === null) return [ERROR_ITEM]
 
     const repository = this.gitAPI.repositories[0]
     if (repository === undefined) return [ERROR_ITEM]
+
+    if (element) {
+      return element.children ?? []
+    }
 
     const state = repository.state
     const branch = state.HEAD?.name || 'HEAD detached'
@@ -77,6 +89,7 @@ export class GitDataProvider implements vscode.TreeDataProvider<GitItem> {
     let coreIgnoreCase: string | undefined = undefined
     let pullRebase: string | undefined = undefined
     let rerereEnabled: string | undefined = undefined
+
     const promises = [
       repository.getConfig('user.name'),
       repository.getConfig('user.email'),
@@ -100,6 +113,7 @@ export class GitDataProvider implements vscode.TreeDataProvider<GitItem> {
         .then(({ stdout }) => stdout.trim())
         .catch(() => undefined)
     ]
+
     try {
       const [
         name,
@@ -116,6 +130,7 @@ export class GitDataProvider implements vscode.TreeDataProvider<GitItem> {
         systemRebase,
         systemRerere
       ] = await Promise.all(promises)
+
       userName = name || globalName || NOT_CONFIGURED
       userEmail = email || globalEmail || NOT_CONFIGURED
       coreIgnoreCase = ignoreCase || globalIgnoreCase || systemIgnoreCase || NOT_CONFIGURED
@@ -125,11 +140,18 @@ export class GitDataProvider implements vscode.TreeDataProvider<GitItem> {
       // Silent failure
     }
 
-    const items: GitItem[] = [
+    const getToggleIcon = (val: string | undefined) => {
+      if (val?.toLowerCase() === 'true') return 'record'
+      if (val?.toLowerCase() === 'false') return 'circle-large-outline'
+      return 'gear'
+    }
+
+    const repoChildren = [
       new GitItem(
         'Remote',
-        remote,
+        remote ?? UNKNOWN,
         'globe',
+        vscode.TreeItemCollapsibleState.None,
         web ?? remote,
         remote
           ? {
@@ -139,22 +161,83 @@ export class GitDataProvider implements vscode.TreeDataProvider<GitItem> {
             }
           : undefined
       ),
-      new GitItem('Branch', branch, 'git-branch', undefined, undefined),
-      new GitItem('User', userName, 'account', userName, {
+      new GitItem('Branch', branch, 'git-branch', vscode.TreeItemCollapsibleState.None)
+    ]
+
+    const identityChildren = [
+      new GitItem('User', userName, 'account', vscode.TreeItemCollapsibleState.None, userName, {
         command: 'git-config-info.copyToClipboard',
         title: 'Copy to clipboard',
         arguments: [userName]
       }),
-      new GitItem('Email', userEmail, 'mail', userEmail, {
+      new GitItem('Email', userEmail, 'mail', vscode.TreeItemCollapsibleState.None, userEmail, {
         command: 'git-config-info.copyToClipboard',
         title: 'Copy to clipboard',
         arguments: [userEmail]
-      }),
-      new GitItem('IgnoreCase', coreIgnoreCase, 'gear', undefined, undefined),
-      new GitItem('Rebase', pullRebase, 'gear', undefined, undefined),
-      new GitItem('Rerere', rerereEnabled, 'gear', undefined, undefined)
+      })
     ]
 
-    return items
+    const configChildren = [
+      new GitItem(
+        'IgnoreCase',
+        coreIgnoreCase,
+        getToggleIcon(coreIgnoreCase),
+        vscode.TreeItemCollapsibleState.None,
+        undefined,
+        undefined,
+        'core.ignoreCase'
+      ),
+      new GitItem(
+        'Rebase',
+        pullRebase,
+        getToggleIcon(pullRebase),
+        vscode.TreeItemCollapsibleState.None,
+        undefined,
+        undefined,
+        'pull.rebase'
+      ),
+      new GitItem(
+        'Rerere',
+        rerereEnabled,
+        getToggleIcon(rerereEnabled),
+        vscode.TreeItemCollapsibleState.None,
+        undefined,
+        undefined,
+        'rerere.enabled'
+      )
+    ]
+
+    return [
+      new GitItem(
+        'Repository',
+        undefined,
+        'repo',
+        vscode.TreeItemCollapsibleState.Expanded,
+        undefined,
+        undefined,
+        undefined,
+        repoChildren
+      ),
+      new GitItem(
+        'Identity',
+        undefined,
+        'organization',
+        vscode.TreeItemCollapsibleState.Expanded,
+        undefined,
+        undefined,
+        undefined,
+        identityChildren
+      ),
+      new GitItem(
+        'Configuration',
+        undefined,
+        'settings-gear',
+        vscode.TreeItemCollapsibleState.Expanded,
+        undefined,
+        undefined,
+        undefined,
+        configChildren
+      )
+    ]
   }
 }
