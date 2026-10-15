@@ -1,0 +1,83 @@
+{
+  "name": "git-config-info",
+  "displayName": "Git Config Info",
+  "description": "Displays Git information for the current project in the sidebar",
+  "version": "1.0.0",
+  "publisher": "siziksu",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Siziksu/Git-Config-Info"
+  },
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.140.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "extensionDependencies": [
+    "vscode.git"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "git-config-info.refreshGitDetails",
+        "title": "Refresh",
+        "category": "Git Config Info",
+        "icon": "$(refresh)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "gitDetailsSidebar",
+          "title": "Git Config Info",
+          "icon": "$(git-branch)"
+        }
+      ]
+    },
+    "views": {
+      "gitDetailsSidebar": [
+        {
+          "id": "gitDetailsView",
+          "name": "Git Config",
+          "icon": "$(git-branch)"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "git-config-info.refreshGitDetails",
+          "when": "view == gitDetailsView",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "24.x",
+    "@types/vscode": "^1.140.0",
+    "@vscode/test-cli": "^0.0.15",
+    "@vscode/test-electron": "^3.0.0",
+    "@vscode/vsce": "^4.0.0",
+    "eslint": "^10.5.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.61.1"
+  },
+  "overrides": {
+    "diff": "^8.0.4",
+    "serialize-javascript": "^7.0.6"
+  }
+}
