@@ -2,8 +2,9 @@
   "name": "git-config-info",
   "displayName": "Git Config Info",
   "description": "Displays Git information for the current project in the sidebar",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "siziksu",
+  "icon": "images/icon.png", 
   "repository": {
     "type": "git",
     "url": "https://github.com/Siziksu/Git-Config-Info"
@@ -34,7 +35,7 @@
         {
           "id": "gitDetailsSidebar",
           "title": "Git Config Info",
-          "icon": "$(git-branch)"
+          "icon": "$(github-alt)"
         }
       ]
     },
@@ -43,7 +44,7 @@
         {
           "id": "gitDetailsView",
           "name": "Git Config",
-          "icon": "$(git-branch)"
+          "icon": "$(github)"
         }
       ]
     },

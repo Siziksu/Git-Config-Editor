@@ -4,7 +4,7 @@ A clean and intuitive Visual Studio Code extension that displays the current pro
 
 ## Features
 
-- 🌿 **Active Branch:** Displays the name of the branch you are currently working on. Click to copy it to your clipboard.
+- 🌿 **Active Branch:** Displays the name of the branch you are currently working on.
 - 🔗 **Remote URL:** Shows the `origin` fetch URL. Click to open it directly in your web browser (supports automatic SSH to HTTPS conversion for GitHub/GitLab).
 - 👤 **User Name:** Displays the local or global `user.name` configured for Git. Click to copy.
 - ✉️ **User Email:** Displays the local or global `user.email` configured for Git. Click to copy.
@@ -26,6 +26,13 @@ This extension contributes the following settings/views:
 - If your workspace does not contain a valid Git repository, the sidebar will gracefully display a warning item instead of breaking.
 
 ## Release Notes
+
+### 1.0.1
+
+- Added a custom extension icon.
+- ⚙️ **Rebase** Displays the local or global `pull.rebase` configured for Git.
+- ⚙️ **Rerere** Displays the local or global `rerere.enabled` configured for Git.
+- ⚙️ **IgnoreCase** Displays the local or global `core.ignorecase` configured for Git.
 
 ### 1.0.0
 

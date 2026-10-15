@@ -5,27 +5,25 @@ import { promisify } from 'util'
 
 const execAsync = promisify(exec)
 
+const UNKNOWN = 'Unknown'
+const NOT_CONFIGURED = 'Not configured'
+
 class GitItem extends vscode.TreeItem {
   constructor(
     public readonly label: string,
-    public readonly description: string,
+    public readonly description: string | undefined,
     icon: string,
-    tooltip: string,
-    command: vscode.Command
+    tooltip: string | undefined,
+    command: vscode.Command | undefined
   ) {
     super(label, vscode.TreeItemCollapsibleState.None)
-    this.description = description
+    this.description = description ?? UNKNOWN
     this.iconPath = new vscode.ThemeIcon(icon)
-    this.tooltip = tooltip
-    this.command = command
+    if (tooltip) this.tooltip = tooltip
+    if (command) this.command = command
   }
 }
-
-const UNKNOWN = 'Unknown'
-const ERROR_ITEM = new GitItem('Warning', 'Git extension not available', 'warning', 'Warning', {
-  command: '',
-  title: ''
-})
+const ERROR_ITEM = new GitItem('Warning', 'Git extension not available', 'warning', undefined, undefined)
 
 export class GitDataProvider implements vscode.TreeDataProvider<GitItem> {
   gitAPI: API | null = null
@@ -64,69 +62,98 @@ export class GitDataProvider implements vscode.TreeDataProvider<GitItem> {
 
     const state = repository.state
     const branch = state.HEAD?.name || 'HEAD detached'
-    const remote = state.remotes[0]?.fetchUrl || UNKNOWN
+    const remote: string | undefined = state.remotes[0]?.fetchUrl
 
     let web: string | undefined = undefined
-    if (remote !== UNKNOWN) {
+    if (remote) {
       const match = remote.match(/github\.com[:/]([^/]+\/[^/]+?)(?:\.git)?$/)
       if (match) {
         web = `https://github.com/${match[1]}`
       }
     }
 
-    let userName = UNKNOWN
-    let userEmail = UNKNOWN
+    let userName: string | undefined = undefined
+    let userEmail: string | undefined = undefined
+    let coreIgnoreCase: string | undefined = undefined
+    let pullRebase: string | undefined = undefined
+    let rerereEnabled: string | undefined = undefined
+    const promises = [
+      repository.getConfig('user.name'),
+      repository.getConfig('user.email'),
+      repository.getConfig('core.ignoreCase'),
+      repository.getConfig('pull.rebase'),
+      repository.getConfig('rerere.enabled'),
+
+      repository.getGlobalConfig('user.name'),
+      repository.getGlobalConfig('user.email'),
+      repository.getGlobalConfig('core.ignoreCase'),
+      repository.getGlobalConfig('pull.rebase'),
+      repository.getGlobalConfig('rerere.enabled'),
+
+      execAsync('git config --system --get core.ignoreCase')
+        .then(({ stdout }) => stdout.trim())
+        .catch(() => undefined),
+      execAsync('git config --system --get pull.rebase')
+        .then(({ stdout }) => stdout.trim())
+        .catch(() => undefined),
+      execAsync('git config --system --get rerere.enabled')
+        .then(({ stdout }) => stdout.trim())
+        .catch(() => undefined)
+    ]
     try {
-      const [name, email] = await Promise.all([repository.getConfig('user.name'), repository.getConfig('user.email')])
-      if (name) userName = name
-      if (email) userEmail = email
+      const [
+        name,
+        email,
+        ignoreCase,
+        rebase,
+        rerere,
+        globalName,
+        globalEmail,
+        globalIgnoreCase,
+        globalRebase,
+        globalRerere,
+        systemIgnoreCase,
+        systemRebase,
+        systemRerere
+      ] = await Promise.all(promises)
+      userName = name || globalName || NOT_CONFIGURED
+      userEmail = email || globalEmail || NOT_CONFIGURED
+      coreIgnoreCase = ignoreCase || globalIgnoreCase || systemIgnoreCase || NOT_CONFIGURED
+      pullRebase = rebase || globalRebase || systemRebase || NOT_CONFIGURED
+      rerereEnabled = rerere || globalRerere || systemRerere || NOT_CONFIGURED
     } catch (e) {
       // Silent failure
     }
-    if (userName === UNKNOWN) {
-      try {
-        const { stdout } = await execAsync('git config --global user.name')
-        if (stdout.trim()) userName = stdout.trim()
-      } catch (e) {}
-    }
 
-    if (userEmail === UNKNOWN) {
-      try {
-        const { stdout } = await execAsync('git config --global user.email')
-        if (stdout.trim()) userEmail = stdout.trim()
-      } catch (e) {}
-    }
-
-    const items: GitItem[] = []
-
-    items.push(
-      new GitItem('Branch', branch, 'git-branch', branch, {
-        command: 'git-config-info.copyToClipboard',
-        title: 'Copy to clipboard',
-        arguments: [branch]
-      })
-    )
-    items.push(
-      new GitItem('Remote', remote, 'globe', web ?? remote, {
-        command: web ? 'vscode.open' : 'git-config-info.copyToClipboard',
-        title: web ? 'Open in Browser' : 'Copy to clipboard',
-        arguments: [web ?? remote]
-      })
-    )
-    items.push(
+    const items: GitItem[] = [
+      new GitItem(
+        'Remote',
+        remote,
+        'globe',
+        web ?? remote,
+        remote
+          ? {
+              command: web ? 'vscode.open' : 'git-config-info.copyToClipboard',
+              title: web ? 'Open in Browser' : 'Copy to clipboard',
+              arguments: [web ?? remote]
+            }
+          : undefined
+      ),
+      new GitItem('Branch', branch, 'git-branch', undefined, undefined),
       new GitItem('User', userName, 'account', userName, {
         command: 'git-config-info.copyToClipboard',
         title: 'Copy to clipboard',
         arguments: [userName]
-      })
-    )
-    items.push(
+      }),
       new GitItem('Email', userEmail, 'mail', userEmail, {
         command: 'git-config-info.copyToClipboard',
         title: 'Copy to clipboard',
         arguments: [userEmail]
-      })
-    )
+      }),
+      new GitItem('IgnoreCase', coreIgnoreCase, 'gear', undefined, undefined),
+      new GitItem('Rebase', pullRebase, 'gear', undefined, undefined),
+      new GitItem('Rerere', rerereEnabled, 'gear', undefined, undefined)
+    ]
 
     return items
   }
