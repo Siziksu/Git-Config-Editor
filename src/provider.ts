@@ -4,7 +4,6 @@ import { execFileAsync, Commands, Contexts, Icons, Keys, Options } from './const
 
 const ValueUnknown = 'Unknown'
 const ValueNotConfigured = 'Not configured'
-const SystemGet = 'git config --system --get'
 
 class GitItem extends vscode.TreeItem {
   constructor(
@@ -88,13 +87,13 @@ export class GitDataProvider implements vscode.TreeDataProvider<GitItem> {
       }
     }
 
-    let userName: string | undefined = undefined
-    let userEmail: string | undefined = undefined
-    let coreIgnoreCase: string | undefined = undefined
-    let pullRebase: string | undefined = undefined
-    let rerereEnabled: string | undefined = undefined
-    let coreAutoCrLf: string | undefined = undefined
-    let fetchPrune: string | undefined = undefined
+    let userNameValue: string | undefined = undefined
+    let userEmailValue: string | undefined = undefined
+    let coreIgnoreCaseValue: string | undefined = undefined
+    let pullRebaseValue: string | undefined = undefined
+    let rerereEnabledValue: string | undefined = undefined
+    let coreAutoCrLfValue: string | undefined = undefined
+    let fetchPruneValue: string | undefined = undefined
 
     const promises = [
       repository.getConfig(Keys.UserName),
@@ -113,19 +112,19 @@ export class GitDataProvider implements vscode.TreeDataProvider<GitItem> {
       repository.getGlobalConfig(Keys.CoreAutoCrLf),
       repository.getGlobalConfig(Keys.FetchPrune),
 
-      execFileAsync(`${SystemGet} ${Keys.CoreIgnoreCase}`)
+      execFileAsync('git', ['config', '--system', '--get', Keys.CoreIgnoreCase])
         .then(({ stdout }) => stdout.trim())
         .catch(() => undefined),
-      execFileAsync(`${SystemGet} ${Keys.PullRebase}`)
+      execFileAsync('git', ['config', '--system', '--get', Keys.PullRebase])
         .then(({ stdout }) => stdout.trim())
         .catch(() => undefined),
-      execFileAsync(`${SystemGet} ${Keys.RerereEnabled}`)
+      execFileAsync('git', ['config', '--system', '--get', Keys.RerereEnabled])
         .then(({ stdout }) => stdout.trim())
         .catch(() => undefined),
-      execFileAsync(`${SystemGet} ${Keys.CoreAutoCrLf}`)
+      execFileAsync('git', ['config', '--system', '--get', Keys.CoreAutoCrLf])
         .then(({ stdout }) => stdout.trim())
         .catch(() => undefined),
-      execFileAsync(`${SystemGet} ${Keys.FetchPrune}`)
+      execFileAsync('git', ['config', '--system', '--get', Keys.FetchPrune])
         .then(({ stdout }) => stdout.trim())
         .catch(() => undefined)
     ]
@@ -137,7 +136,7 @@ export class GitDataProvider implements vscode.TreeDataProvider<GitItem> {
         _coreIgnoreCase,
         _pullRebase,
         _rerereEnabled,
-        _CoreAutoCrLf,
+        _coreAutoCrLf,
         _fetchPrune,
         globalName,
         globalEmail,
@@ -153,13 +152,13 @@ export class GitDataProvider implements vscode.TreeDataProvider<GitItem> {
         systemFetchPrune
       ] = await Promise.all(promises)
 
-      userName = _name || globalName || ValueNotConfigured
-      userEmail = _email || globalEmail || ValueNotConfigured
-      coreIgnoreCase = _coreIgnoreCase || globalCoreIgnoreCase || systemCoreIgnoreCase || ValueNotConfigured
-      pullRebase = _pullRebase || globalPullRebase || systemPullRebase || ValueNotConfigured
-      rerereEnabled = _rerereEnabled || globalRerereEnabled || systemRerereEnabled || ValueNotConfigured
-      coreAutoCrLf = _CoreAutoCrLf || globalAutoCrLf || systemAutoCrLf || ValueNotConfigured
-      fetchPrune = _fetchPrune || globalFetchPrune || systemFetchPrune || ValueNotConfigured
+      userNameValue = _name || globalName || ValueNotConfigured
+      userEmailValue = _email || globalEmail || ValueNotConfigured
+      coreIgnoreCaseValue = _coreIgnoreCase || globalCoreIgnoreCase || systemCoreIgnoreCase || ValueNotConfigured
+      pullRebaseValue = _pullRebase || globalPullRebase || systemPullRebase || ValueNotConfigured
+      rerereEnabledValue = _rerereEnabled || globalRerereEnabled || systemRerereEnabled || ValueNotConfigured
+      coreAutoCrLfValue = _coreAutoCrLf || globalAutoCrLf || systemAutoCrLf || ValueNotConfigured
+      fetchPruneValue = _fetchPrune || globalFetchPrune || systemFetchPrune || ValueNotConfigured
     } catch (e) {
       // Silent failure
     }
@@ -191,28 +190,28 @@ export class GitDataProvider implements vscode.TreeDataProvider<GitItem> {
     const identityChildren = [
       new GitItem(
         'User',
-        userName,
+        userNameValue,
         Icons.Account,
         vscode.TreeItemCollapsibleState.None,
         Commands.CopyToClipboard.Title,
         {
           command: Commands.CopyToClipboard.Command,
           title: Commands.CopyToClipboard.Title,
-          arguments: [userName]
+          arguments: [userNameValue]
         },
         Contexts.Edit,
         Keys.UserName
       ),
       new GitItem(
         'Email',
-        userEmail,
+        userEmailValue,
         Icons.Mail,
         vscode.TreeItemCollapsibleState.None,
         Commands.CopyToClipboard.Title,
         {
           command: Commands.CopyToClipboard.Command,
           title: Commands.CopyToClipboard.Title,
-          arguments: [userEmail]
+          arguments: [userEmailValue]
         },
         Contexts.Edit,
         Keys.UserEmail
@@ -222,8 +221,8 @@ export class GitDataProvider implements vscode.TreeDataProvider<GitItem> {
     const configChildren = [
       new GitItem(
         'Ignore Case',
-        coreIgnoreCase,
-        getToggleIcon(coreIgnoreCase),
+        coreIgnoreCaseValue,
+        getToggleIcon(coreIgnoreCaseValue),
         vscode.TreeItemCollapsibleState.None,
         undefined,
         undefined,
@@ -232,8 +231,8 @@ export class GitDataProvider implements vscode.TreeDataProvider<GitItem> {
       ),
       new GitItem(
         'Pull Rebase',
-        pullRebase,
-        getToggleIcon(pullRebase),
+        pullRebaseValue,
+        getToggleIcon(pullRebaseValue),
         vscode.TreeItemCollapsibleState.None,
         undefined,
         undefined,
@@ -242,8 +241,8 @@ export class GitDataProvider implements vscode.TreeDataProvider<GitItem> {
       ),
       new GitItem(
         'Rerere',
-        rerereEnabled,
-        getToggleIcon(rerereEnabled),
+        rerereEnabledValue,
+        getToggleIcon(rerereEnabledValue),
         vscode.TreeItemCollapsibleState.None,
         undefined,
         undefined,
@@ -252,7 +251,7 @@ export class GitDataProvider implements vscode.TreeDataProvider<GitItem> {
       ),
       new GitItem(
         'Auto CrLf',
-        coreAutoCrLf,
+        coreAutoCrLfValue,
         Icons.Gear,
         vscode.TreeItemCollapsibleState.None,
         undefined,
@@ -263,8 +262,8 @@ export class GitDataProvider implements vscode.TreeDataProvider<GitItem> {
       ),
       new GitItem(
         'Fetch Prune',
-        fetchPrune,
-        getToggleIcon(fetchPrune),
+        fetchPruneValue,
+        getToggleIcon(fetchPruneValue),
         vscode.TreeItemCollapsibleState.None,
         undefined,
         undefined,
