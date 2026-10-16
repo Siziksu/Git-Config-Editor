@@ -1,12 +1,10 @@
 import * as vscode from 'vscode'
 import { GitExtension, API } from './git'
-import { exec } from 'child_process'
-import { promisify } from 'util'
+import { execFileAsync, Commands, Contexts, Icons, Keys, Options } from './constants'
 
-const execAsync = promisify(exec)
-
-const UNKNOWN = 'Unknown'
-const NOT_CONFIGURED = 'Not configured'
+const ValueUnknown = 'Unknown'
+const ValueNotConfigured = 'Not configured'
+const SystemGet = 'git config --system --get'
 
 class GitItem extends vscode.TreeItem {
   constructor(
@@ -16,7 +14,9 @@ class GitItem extends vscode.TreeItem {
     public readonly collapsibleState: vscode.TreeItemCollapsibleState,
     public readonly tooltip?: string,
     public readonly command?: vscode.Command,
+    public readonly context?: string,
     public readonly key?: string,
+    public readonly options?: string[],
     public readonly children?: GitItem[]
   ) {
     super(label, collapsibleState)
@@ -24,7 +24,7 @@ class GitItem extends vscode.TreeItem {
     if (icon) this.iconPath = new vscode.ThemeIcon(icon)
     if (tooltip) this.tooltip = tooltip
     if (command) this.command = command
-    if (key) this.contextValue = 'toggleConfig'
+    if (key) this.contextValue = context
   }
 }
 
@@ -93,112 +93,152 @@ export class GitDataProvider implements vscode.TreeDataProvider<GitItem> {
     let coreIgnoreCase: string | undefined = undefined
     let pullRebase: string | undefined = undefined
     let rerereEnabled: string | undefined = undefined
+    let coreAutoCrLf: string | undefined = undefined
+    let fetchPrune: string | undefined = undefined
 
     const promises = [
-      repository.getConfig('user.name'),
-      repository.getConfig('user.email'),
-      repository.getConfig('core.ignoreCase'),
-      repository.getConfig('pull.rebase'),
-      repository.getConfig('rerere.enabled'),
+      repository.getConfig(Keys.UserName),
+      repository.getConfig(Keys.UserEmail),
+      repository.getConfig(Keys.CoreIgnoreCase),
+      repository.getConfig(Keys.PullRebase),
+      repository.getConfig(Keys.RerereEnabled),
+      repository.getConfig(Keys.CoreAutoCrLf),
+      repository.getConfig(Keys.FetchPrune),
 
-      repository.getGlobalConfig('user.name'),
-      repository.getGlobalConfig('user.email'),
-      repository.getGlobalConfig('core.ignoreCase'),
-      repository.getGlobalConfig('pull.rebase'),
-      repository.getGlobalConfig('rerere.enabled'),
+      repository.getGlobalConfig(Keys.UserName),
+      repository.getGlobalConfig(Keys.UserEmail),
+      repository.getGlobalConfig(Keys.CoreIgnoreCase),
+      repository.getGlobalConfig(Keys.PullRebase),
+      repository.getGlobalConfig(Keys.RerereEnabled),
+      repository.getGlobalConfig(Keys.CoreAutoCrLf),
+      repository.getGlobalConfig(Keys.FetchPrune),
 
-      execAsync('git config --system --get core.ignoreCase')
+      execFileAsync(`${SystemGet} ${Keys.CoreIgnoreCase}`)
         .then(({ stdout }) => stdout.trim())
         .catch(() => undefined),
-      execAsync('git config --system --get pull.rebase')
+      execFileAsync(`${SystemGet} ${Keys.PullRebase}`)
         .then(({ stdout }) => stdout.trim())
         .catch(() => undefined),
-      execAsync('git config --system --get rerere.enabled')
+      execFileAsync(`${SystemGet} ${Keys.RerereEnabled}`)
+        .then(({ stdout }) => stdout.trim())
+        .catch(() => undefined),
+      execFileAsync(`${SystemGet} ${Keys.CoreAutoCrLf}`)
+        .then(({ stdout }) => stdout.trim())
+        .catch(() => undefined),
+      execFileAsync(`${SystemGet} ${Keys.FetchPrune}`)
         .then(({ stdout }) => stdout.trim())
         .catch(() => undefined)
     ]
 
     try {
       const [
-        name,
-        email,
-        ignoreCase,
-        rebase,
-        rerere,
+        _name,
+        _email,
+        _coreIgnoreCase,
+        _pullRebase,
+        _rerereEnabled,
+        _CoreAutoCrLf,
+        _fetchPrune,
         globalName,
         globalEmail,
-        globalIgnoreCase,
-        globalRebase,
-        globalRerere,
-        systemIgnoreCase,
-        systemRebase,
-        systemRerere
+        globalCoreIgnoreCase,
+        globalPullRebase,
+        globalRerereEnabled,
+        globalAutoCrLf,
+        globalFetchPrune,
+        systemCoreIgnoreCase,
+        systemPullRebase,
+        systemRerereEnabled,
+        systemAutoCrLf,
+        systemFetchPrune
       ] = await Promise.all(promises)
 
-      userName = name || globalName || NOT_CONFIGURED
-      userEmail = email || globalEmail || NOT_CONFIGURED
-      coreIgnoreCase = ignoreCase || globalIgnoreCase || systemIgnoreCase || NOT_CONFIGURED
-      pullRebase = rebase || globalRebase || systemRebase || NOT_CONFIGURED
-      rerereEnabled = rerere || globalRerere || systemRerere || NOT_CONFIGURED
+      userName = _name || globalName || ValueNotConfigured
+      userEmail = _email || globalEmail || ValueNotConfigured
+      coreIgnoreCase = _coreIgnoreCase || globalCoreIgnoreCase || systemCoreIgnoreCase || ValueNotConfigured
+      pullRebase = _pullRebase || globalPullRebase || systemPullRebase || ValueNotConfigured
+      rerereEnabled = _rerereEnabled || globalRerereEnabled || systemRerereEnabled || ValueNotConfigured
+      coreAutoCrLf = _CoreAutoCrLf || globalAutoCrLf || systemAutoCrLf || ValueNotConfigured
+      fetchPrune = _fetchPrune || globalFetchPrune || systemFetchPrune || ValueNotConfigured
     } catch (e) {
       // Silent failure
     }
 
     const getToggleIcon = (val: string | undefined) => {
-      if (val?.toLowerCase() === 'true') return 'record'
-      if (val?.toLowerCase() === 'false') return 'circle-large-outline'
-      return 'gear'
+      if (val?.toLowerCase() === 'true') return Icons.Unselected
+      if (val?.toLowerCase() === 'false') return Icons.Selected
+      return Icons.Gear
     }
 
     const repoChildren = [
       new GitItem(
         'Remote',
-        remote ?? UNKNOWN,
-        'globe',
+        remote ?? ValueUnknown,
+        Icons.Globe,
         vscode.TreeItemCollapsibleState.None,
         web ?? remote,
         remote
           ? {
-              command: web ? 'vscode.open' : 'git-config-info.copyToClipboard',
-              title: web ? 'Open in Browser' : 'Copy to clipboard',
+              command: web ? Commands.OpenInBrowser.Command : Commands.CopyToClipboard.Command,
+              title: web ? Commands.OpenInBrowser.Title : Commands.CopyToClipboard.Title,
               arguments: [web ?? remote]
             }
           : undefined
       ),
-      new GitItem('Branch', branch, 'git-branch', vscode.TreeItemCollapsibleState.None)
+      new GitItem('Branch', branch, Icons.GitBranch, vscode.TreeItemCollapsibleState.None)
     ]
 
     const identityChildren = [
-      new GitItem('User', userName, 'account', vscode.TreeItemCollapsibleState.None, userName, {
-        command: 'git-config-info.copyToClipboard',
-        title: 'Copy to clipboard',
-        arguments: [userName]
-      }),
-      new GitItem('Email', userEmail, 'mail', vscode.TreeItemCollapsibleState.None, userEmail, {
-        command: 'git-config-info.copyToClipboard',
-        title: 'Copy to clipboard',
-        arguments: [userEmail]
-      })
+      new GitItem(
+        'User',
+        userName,
+        Icons.Account,
+        vscode.TreeItemCollapsibleState.None,
+        Commands.CopyToClipboard.Title,
+        {
+          command: Commands.CopyToClipboard.Command,
+          title: Commands.CopyToClipboard.Title,
+          arguments: [userName]
+        },
+        Contexts.Edit,
+        Keys.UserName
+      ),
+      new GitItem(
+        'Email',
+        userEmail,
+        Icons.Mail,
+        vscode.TreeItemCollapsibleState.None,
+        Commands.CopyToClipboard.Title,
+        {
+          command: Commands.CopyToClipboard.Command,
+          title: Commands.CopyToClipboard.Title,
+          arguments: [userEmail]
+        },
+        Contexts.Edit,
+        Keys.UserEmail
+      )
     ]
 
     const configChildren = [
       new GitItem(
-        'IgnoreCase',
+        'Ignore Case',
         coreIgnoreCase,
         getToggleIcon(coreIgnoreCase),
         vscode.TreeItemCollapsibleState.None,
         undefined,
         undefined,
-        'core.ignoreCase'
+        Contexts.Toggle,
+        Keys.CoreIgnoreCase
       ),
       new GitItem(
-        'Rebase',
+        'Pull Rebase',
         pullRebase,
         getToggleIcon(pullRebase),
         vscode.TreeItemCollapsibleState.None,
         undefined,
         undefined,
-        'pull.rebase'
+        Contexts.Toggle,
+        Keys.PullRebase
       ),
       new GitItem(
         'Rerere',
@@ -207,7 +247,29 @@ export class GitDataProvider implements vscode.TreeDataProvider<GitItem> {
         vscode.TreeItemCollapsibleState.None,
         undefined,
         undefined,
-        'rerere.enabled'
+        Contexts.Toggle,
+        Keys.RerereEnabled
+      ),
+      new GitItem(
+        'Auto CrLf',
+        coreAutoCrLf,
+        Icons.Gear,
+        vscode.TreeItemCollapsibleState.None,
+        undefined,
+        undefined,
+        Contexts.Select,
+        Keys.CoreAutoCrLf,
+        Options.CoreAutoCrLf
+      ),
+      new GitItem(
+        'Fetch Prune',
+        fetchPrune,
+        getToggleIcon(fetchPrune),
+        vscode.TreeItemCollapsibleState.None,
+        undefined,
+        undefined,
+        Contexts.Toggle,
+        Keys.FetchPrune
       )
     ]
 
@@ -217,6 +279,8 @@ export class GitDataProvider implements vscode.TreeDataProvider<GitItem> {
         undefined,
         'repo',
         vscode.TreeItemCollapsibleState.Expanded,
+        undefined,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -230,13 +294,17 @@ export class GitDataProvider implements vscode.TreeDataProvider<GitItem> {
         undefined,
         undefined,
         undefined,
+        undefined,
+        undefined,
         identityChildren
       ),
       new GitItem(
         'Configuration',
         undefined,
-        'settings-gear',
+        Icons.SettingsGear,
         vscode.TreeItemCollapsibleState.Expanded,
+        undefined,
+        undefined,
         undefined,
         undefined,
         undefined,

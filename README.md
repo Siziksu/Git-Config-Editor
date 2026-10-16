@@ -7,7 +7,12 @@ A clean and intuitive Visual Studio Code extension to displays and edit the curr
 - **Hierarchical Collapsible Views:** 3 clean, expandable categories (`Repository`, `Identity`, and `Configuration`) to improve visual structure and clean clutter.
 - **Repository group**: `Remote URL` and `Active Branch`, displaying the name of the branch you are currently working on, and the `origin` fetch URL. Click to open it directly in your web browser (supports automatic SSH to HTTPS conversion for GitHub/GitLab).
 - **Identity group**: Displays the `user.name` and `user.email` configured for the projet. Click to copy.
-- **Configuration group**: Inline interactive configuration toggles (switch-like behavior) for `Rebase`, `IgnoreCase`, and `Rerere`.
+- **Configuration group**: Inline interactive configuration toggles (switch-like behavior) for:
+  - `pull.rebase`
+  - `core.gnoreCase`
+  - `rerere.enabled`
+  - `core.autocrlf`
+  - `fetch.prune`
 - **Live Reactivity & Manual Refresh:** Automatically updates whenever you switch branches or make changes. Also has a manual refresh button available in the view toolbar.
 
 ## Requirements
@@ -26,6 +31,12 @@ This extension contributes the following settings/views:
 
 ## Release Notes
 
+### 1.3.0
+
+- Now it is possible to edit `user.name`and `user.email`.
+- Added `core.autocrlf` and `fetch.prune` to the **Configuration group**.
+- Options like `core.autocrlf` now can be edit using a dropdown.
+
 ### 1.2.0
 
 - New name to align it with the program's new features.
@@ -40,9 +51,9 @@ This extension contributes the following settings/views:
 ### 1.1.0
 
 - **Hierarchical Collapsible Views:** Reorganized the entire sidebar into 3 clean, expandable categories (`Repository`, `Identity`, and `Configuration`) to improve visual structure and clean clutter.
-- **Interactive Configuration Toggles:** Added inline switch-like behavior for `Rebase`, `IgnoreCase`, and `Rerere` inside the new Configuration group.
+- **Interactive Configuration Toggles:** Added inline switch-like behavior for `pull.rebase`, `core.gnoreCase`, and `rerere.enabled` inside the new Configuration group.
 - **Inline Row Actions:** Added hover button interactions to execute `git config` modifiers instantly without leaving the panel.
-- **Dynamic Codicons:** Implemented visual checkbox indicators (`pass-filled` for true and `circle-outline` for false) reflecting real-time Git status changes.
+- **Dynamic Codicons:** Implemented visual checkbox indicators reflecting real-time Git status changes.
 
 ### 1.0.1
 
