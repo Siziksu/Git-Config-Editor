@@ -13,6 +13,10 @@ A clean and intuitive Visual Studio Code extension to displays and edit the curr
   - `rerere.enabled`
   - `core.autocrlf`
   - `fetch.prune`
+- **Actions:**
+  - `Set`
+  - `Edit`
+  - `Delete` (unset)
 - **Live Reactivity & Manual Refresh:** Automatically updates whenever you switch branches or make changes. Also has a manual refresh button available in the view toolbar.
 
 ## Requirements
@@ -23,13 +27,22 @@ This extension relies on the built-in VS Code Git extension (`vscode.git`) to fe
 
 This extension contributes the following settings/views:
 
-- `Git Details View`: The sidebar view container where all the Git metadata is neatly listed.
-- `Refresh Git Details`: A toolbar command to force a manual refresh of the data.
-- `Oen Git Config File`: A toolbar command to open the project's Git config file.
+- `Activity Bar`: The sidebar view container for the views.
+  - `Status View`: The view container where all the Git metadata is neatly listed.
+  - `Editor View`: The view container where all the Git metadata can be edited.
+    - `Open Local Git Config File`: A toolbar command to open the project's Git config file.
+    - `Refresh Git Details`: A toolbar command to force a manual refresh of the data.
 
 ## Known Issues
 
 ## Release Notes
+
+### 1.4.0
+
+- Added 2 views, `Status` and `Editor`.
+- `Status View:` View where the final Git data for the project gets listed.
+- `Editor View:` View where the Git data can be edited. It has 2 sections, `Local` and `Global`.
+- `Delete:` Now is possible to unset Git options.
 
 ### 1.3.0
 

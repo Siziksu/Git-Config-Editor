@@ -1,153 +1,138 @@
 import * as vscode from 'vscode'
 import { join } from 'path'
-import { GitDataProvider } from './provider'
-import { execFileAsync, Commands } from './constants'
+import { execFileAsync, Commands, ValueNotConfigured } from './constants'
+import { GitRepositoryService } from './git-repository.service'
+import { GitInfoProvider } from './git-info.provider'
+import { GitEditorProvider } from './git-editor.provider'
+
+type LocalGlobal = 'local' | 'global'
 
 export function activate(context: vscode.ExtensionContext) {
-  const gitDataProvider = new GitDataProvider()
+  const service = new GitRepositoryService()
+  const infoProvider = new GitInfoProvider(service)
+  const editorProvider = new GitEditorProvider(service)
 
-  vscode.window.registerTreeDataProvider('viewGitEditor', gitDataProvider)
+  vscode.window.registerTreeDataProvider('viewGitInfo', infoProvider)
+  vscode.window.registerTreeDataProvider('viewGitEditor', editorProvider)
 
-  let toggleCommand = vscode.commands.registerCommand(Commands.Toggle.Command, async (item: any) => {
-    if (!item || !item.key) return
-
-    const key = item.key
-    const currentValue = item.description
-    const newValue = currentValue?.toLowerCase() === 'true' ? 'false' : 'true'
-
+  async function saveGitConfig(key: string, value: string, scope: LocalGlobal) {
     try {
       const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
       const options = workspaceFolder ? { cwd: workspaceFolder } : {}
 
-      await execFileAsync('git', ['config', key, newValue], options)
+      const args = ['config']
+      if (scope === 'global') args.push('--global')
+      args.push(key, value)
 
-      vscode.window.showInformationMessage(`Git config updated: ${key} = ${newValue}`)
+      await execFileAsync('git', args, options)
+      vscode.window.showInformationMessage(`Git config updated: ${key} = ${value}`)
 
-      gitDataProvider.refresh()
+      await service.refresh()
     } catch (error: any) {
-      if (error instanceof Error) {
-        vscode.window.showErrorMessage(`Error while changing git config: ${error.message}`)
-      } else {
-        vscode.window.showErrorMessage('Unknown error occurred while changing git config.')
-      }
+      const msg = error instanceof Error ? error.message : 'Unknown error'
+      vscode.window.showErrorMessage(`Error while changing git config: ${msg}`)
     }
-  })
+  }
 
-  let selectCommand = vscode.commands.registerCommand(Commands.Select.Command, async (item: any) => {
-    if (!item || !item.key || !item.options) return
-
-    const key = item.key
-    const options = item.options
-
-    const newValue = await vscode.window.showQuickPick(options, {
-      placeHolder: 'Select behaviour',
-      title: 'Git Editor'
+  const registerToggle = (commandId: string, scope: LocalGlobal) => {
+    return vscode.commands.registerCommand(commandId, async (item: any) => {
+      if (!item || !item.key) return
+      const newValue = item.description?.toLowerCase() === 'true' ? 'false' : 'true'
+      await saveGitConfig(item.key, newValue, scope)
     })
+  }
 
-    if (newValue) {
+  const registerSelect = (commandId: string, scope: LocalGlobal) => {
+    return vscode.commands.registerCommand(commandId, async (item: any) => {
+      if (!item || !item.key || !item.options) return
+      const newValue = await vscode.window.showQuickPick(item.options, {
+        placeHolder: 'Select behaviour',
+        title: 'Git Editor'
+      })
+      if (newValue) await saveGitConfig(item.key, newValue, scope)
+    })
+  }
+
+  function registerEdit(commandId: string, scope: LocalGlobal) {
+    return vscode.commands.registerCommand(commandId, async (item: any) => {
+      const value = !item.description ? '' : item.description === ValueNotConfigured ? '' : item.description
+      if (!item || !item.key) return
+      const input = await vscode.window.showInputBox({
+        title: 'Git Editor: Change Value',
+        prompt: 'Enter the new value',
+        value: value,
+        placeHolder: 'New value',
+        validateInput: (text) => (text.trim().length === 0 ? 'The new value cannot be empty' : null)
+      })
+      if (input !== undefined && input.trim().length > 0) {
+        await saveGitConfig(item.key, input.trim(), scope)
+      }
+    })
+  }
+
+  function registerDelete(commandId: string, scope: LocalGlobal) {
+    return vscode.commands.registerCommand(commandId, async (item: any) => {
+      if (!item || !item.key) return
       try {
+        const key = item.key
+
         const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
         const options = workspaceFolder ? { cwd: workspaceFolder } : {}
 
-        await execFileAsync('git', ['config', key, newValue], options)
+        const args = ['config']
+        if (scope === 'global') args.push('--global')
+        args.push('--unset')
+        args.push(key)
 
-        vscode.window.showInformationMessage(`Git config updated: ${key} = ${newValue}`)
+        await execFileAsync('git', args, options)
+        vscode.window.showInformationMessage(`Git key unset: ${key}`)
 
-        gitDataProvider.refresh()
+        await service.refresh()
       } catch (error: any) {
-        if (error instanceof Error) {
-          vscode.window.showErrorMessage(`Error while changing git config: ${error.message}`)
-        } else {
-          vscode.window.showErrorMessage('Unknown error occurred while changing git config.')
-        }
-      }
-    }
-  })
-
-  let editCommand = vscode.commands.registerCommand(Commands.Edit.Command, async (item: any) => {
-    if (!item || !item.key) return
-
-    const key = item.key
-    const current = item.description || ''
-
-    const input = await vscode.window.showInputBox({
-      title: 'Git Editor: Change Value',
-      prompt: 'Enter the new value',
-      value: current,
-      placeHolder: 'New value',
-
-      // It is mandatory to ensure that the user does not leave the name field empty
-      validateInput: (text) => {
-        return text.trim().length === 0 ? 'The new value cannot be empty' : null
+        const msg = error instanceof Error ? error.message : 'Unknown error'
+        vscode.window.showErrorMessage(`Key already unset`)
       }
     })
-
-    if (input !== undefined && input.trim().length > 0) {
-      const newValue = input.trim()
-      try {
-        const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
-        const options = workspaceFolder ? { cwd: workspaceFolder } : {}
-
-        await execFileAsync('git', ['config', key, newValue], options)
-
-        vscode.window.showInformationMessage(`Git config updated: ${key} = ${newValue}`)
-
-        gitDataProvider.refresh()
-      } catch (error) {
-        if (error instanceof Error) {
-          vscode.window.showErrorMessage(`Error while changing git config: ${error.message}`)
-        } else {
-          vscode.window.showErrorMessage('Unknown error occurred while changing git config.')
-        }
-      }
-    }
-  })
-
-  let openConfigFileCommand = vscode.commands.registerCommand(Commands.openGitFileCommand.Command, async () => {
-    const workspaceFolders = vscode.workspace.workspaceFolders
-    if (!workspaceFolders) {
-      vscode.window.showErrorMessage('There is no open workspace.')
-      return
-    }
-
-    const rootPath = workspaceFolders[0].uri.fsPath
-    const path = join(rootPath, '.git', 'config')
-    const file = vscode.Uri.file(path)
-
-    try {
-      const document = await vscode.workspace.openTextDocument(file)
-      await vscode.window.showTextDocument(document, { preview: false })
-    } catch (error) {
-      if (error instanceof Error) {
-        vscode.window.showErrorMessage(`Could not open .git/config: ${error.message}`)
-      } else {
-        vscode.window.showErrorMessage('Unknown error occurred while trying to open .git/config.')
-      }
-    }
-  })
-
-  let refreshCommand = vscode.commands.registerCommand(Commands.Refresh.Command, () => {
-    gitDataProvider.refresh()
-  })
-
-  let copyToClipboardCommand = vscode.commands.registerCommand(
-    Commands.CopyToClipboard.Command,
-    async (value: string) => {
-      if (value && value !== 'Unknown' && value !== 'Not configured') {
-        await vscode.env.clipboard.writeText(value)
-        // Displays a floating notification that disappears on its own
-        vscode.window.showInformationMessage(`Copied "${value}" to the clipboard.`)
-      }
-    }
-  )
+  }
 
   context.subscriptions.push(
-    copyToClipboardCommand,
-    refreshCommand,
-    toggleCommand,
-    selectCommand,
-    editCommand,
-    openConfigFileCommand
+    registerToggle(Commands.Toggle.Command, 'local'),
+    registerSelect(Commands.Select.Command, 'local'),
+    registerEdit(Commands.Edit.Command, 'local'),
+    registerDelete(Commands.Delete.Command, 'local'),
+    registerToggle(Commands.ToggleGlobal.Command, 'global'),
+    registerSelect(Commands.SelectGlobal.Command, 'global'),
+    registerEdit(Commands.EditGlobal.Command, 'global'),
+    registerDelete(Commands.DeleteGlobal.Command, 'global'),
+
+    vscode.commands.registerCommand(Commands.Refresh.Command, () => service.refresh()),
+
+    vscode.commands.registerCommand(Commands.openGitFileCommand.Command, async () => {
+      const workspaceFolders = vscode.workspace.workspaceFolders
+      if (!workspaceFolders) {
+        vscode.window.showErrorMessage('There is no open workspace.')
+        return
+      }
+
+      const file = vscode.Uri.file(join(workspaceFolders[0].uri.fsPath, '.git', 'config'))
+      try {
+        const document = await vscode.workspace.openTextDocument(file)
+        await vscode.window.showTextDocument(document, { preview: false })
+      } catch (error) {
+        if (error instanceof Error) {
+          vscode.window.showWarningMessage(`Git extension not available.`)
+        } else {
+          vscode.window.showErrorMessage('Unknown error occurred while trying to open .git/config.')
+        }
+      }
+    }),
+
+    vscode.commands.registerCommand(Commands.CopyToClipboard.Command, async (value: string) => {
+      if (value && value !== 'Unknown' && value !== 'Not configured') {
+        await vscode.env.clipboard.writeText(value)
+        vscode.window.showInformationMessage(`Copied "${value}" to the clipboard.`)
+      }
+    })
   )
 }
 

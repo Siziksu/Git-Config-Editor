@@ -3,6 +3,9 @@ import { promisify } from 'util'
 
 export const execFileAsync = promisify(execFile)
 
+export const ValueUnknown = 'Unknown'
+export const ValueNotConfigured = 'Not configured'
+
 export const Commands = {
   CopyToClipboard: {
     Command: 'git-config-info.copyToClipboard',
@@ -20,13 +23,33 @@ export const Commands = {
     Command: 'git-config-info.selectCommand',
     Title: 'Select Option'
   },
+  EditGlobal: {
+    Command: 'git-config-info.editGlobalCommand',
+    Title: 'Edit Text'
+  },
+  ToggleGlobal: {
+    Command: 'git-config-info.toggleGlobalCommand',
+    Title: 'Toggle Option'
+  },
+  SelectGlobal: {
+    Command: 'git-config-info.selectGlobalCommand',
+    Title: 'Select Option'
+  },
   openGitFileCommand: {
     Command: 'git-config-info.openGitFileCommand',
-    Title: 'Open Git Config File'
+    Title: 'Open Local Git Config File'
   },
   Refresh: {
     Command: 'git-config-info.refreshViewCommand',
     Title: 'Refresh View'
+  },
+  Delete: {
+    Command: 'git-config-info.deleteCommand',
+    Title: 'Delete Option'
+  },
+  DeleteGlobal: {
+    Command: 'git-config-info.deleteGlobalCommand',
+    Title: 'Delete Option'
   },
   OpenInBrowser: {
     Command: 'vscode.open',
@@ -56,11 +79,15 @@ export const Icons = {
   Selected: 'circle-large-outline',
   Gear: 'gear',
   SettingsGear: 'settings-gear',
-  GitBranch: 'git-branch'
+  GitBranch: 'git-branch',
+  Item: 'dash' // 'chevron-right'
 }
 
 export const Contexts = {
-  Toggle: 'ViewItemContextToggle',
-  Select: 'ViewItemContextSelect',
-  Edit: 'ViewItemContextEdit'
+  Toggle: 'ContextToggle',
+  Select: 'ContextSelect',
+  Edit: 'ContextEdit',
+  ToggleGlobal: 'ContextToggleGlobal',
+  SelectGlobal: 'ContextSelectGlobal',
+  EditGlobal: 'ContextEditGlobal'
 }
