@@ -1,13 +1,13 @@
 {
   "name": "git-config-info",
-  "displayName": "Git Config Info",
-  "description": "Displays Git information for the current project in the sidebar",
-  "version": "1.1.1",
+  "displayName": "Git Editor",
+  "description": "Displays and edits Git information for the current project",
+  "version": "1.2.0",
   "publisher": "siziksu",
   "icon": "images/icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Siziksu/Git-Config-Info"
+    "url": "https://github.com/Siziksu/Git-Config-Editor"
   },
   "license": "MIT",
   "engines": {
@@ -26,13 +26,19 @@
       {
         "command": "git-config-info.refreshGitDetails",
         "title": "Refresh",
-        "category": "Git Config Info",
+        "category": "Siziksu Git Editor",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "git-config-info.openGitConfigFile",
+        "title": "Open Git Config File",
+        "category": "Siziksu Git Editor",
+        "icon": "$(code)"
       },
       {
         "command": "git-config-info.toggleGitConfig",
         "title": "Toggle",
-        "category": "Git Config Info",
+        "category": "Siziksu Git Editor",
         "icon": "$(sync)"
       }
     ],
@@ -40,7 +46,7 @@
       "activitybar": [
         {
           "id": "gitDetailsSidebar",
-          "title": "Git Config Info",
+          "title": "Siziksu Git Editor",
           "icon": "$(github-alt)"
         }
       ]
@@ -48,24 +54,35 @@
     "views": {
       "gitDetailsSidebar": [
         {
-          "id": "gitDetailsView",
-          "name": "Git Config",
+          "id": "gitEditorView",
+          "name": "Siziksu Git Editor",
           "icon": "$(github)"
         }
       ]
     },
     "menus": {
+      "commandPalette": [
+        {
+          "command": "git-config-info.toggleGitConfig",
+          "when": "false"
+        }
+      ],
       "view/title": [
         {
+          "command": "git-config-info.openGitConfigFile",
+          "when": "view == gitEditorView",
+          "group": "navigation"
+        },
+        {
           "command": "git-config-info.refreshGitDetails",
-          "when": "view == gitDetailsView",
+          "when": "view == gitEditorView",
           "group": "navigation"
         }
       ],
       "view/item/context": [
         {
           "command": "git-config-info.toggleGitConfig",
-          "when": "view == gitDetailsView && viewItem == toggleConfig",
+          "when": "view == gitEditorView && viewItem == toggleConfig",
           "group": "inline"
         }
       ]
