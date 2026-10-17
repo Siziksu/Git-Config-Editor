@@ -1,7 +1,8 @@
 import * as vscode from 'vscode'
-import { GitExtension, API } from './git'
+import { GitExtension, API, Repository } from './git'
 import { Keys } from './constants'
 import { execFileAsync } from './functions'
+import { join } from 'path'
 
 export interface GitData {
   remote?: string
@@ -35,31 +36,121 @@ export class GitRepositoryService {
   private _onDidChangeData = new vscode.EventEmitter<GitData>()
   public readonly onDidChangeData = this._onDidChangeData.event
 
-  constructor() {
-    const gitExtension = vscode.extensions.getExtension<GitExtension>('vscode.git')?.exports
-    if (gitExtension) {
-      this._api = gitExtension.getAPI(1)
-      this._api.onDidChangeState(() => this.refresh())
+  private _repoDisposables = new Map<string, vscode.Disposable[]>()
+
+  constructor(context: vscode.ExtensionContext) {
+    this.init(context)
+  }
+
+  private async init(context: vscode.ExtensionContext) {
+    const gitExtension = vscode.extensions.getExtension<GitExtension>('vscode.git')
+    if (!gitExtension) return
+
+    const exports = await gitExtension.activate()
+
+    this._api = exports.getAPI(1)
+
+    context.subscriptions.push(
       this._api.onDidOpenRepository((repo) => {
+        this.setupRepositoryListeners(context, repo)
         this.refresh()
-        repo.state.onDidChange(() => this.refresh())
+      }),
+      this._api.onDidCloseRepository((repo) => {
+        this.disposeRepository(repo)
+        this.clear()
+      }),
+      this._api.onDidChangeState(() => {
+        this.refresh()
+      }),
+      new vscode.Disposable(() => {
+        this._repoDisposables.forEach((arr) => arr.forEach((d) => d.dispose()))
+        this._repoDisposables.clear()
       })
-      this._api.repositories.forEach((repo) => {
-        repo.state.onDidChange(() => this.refresh())
-      })
+    )
+
+    this._api.repositories.forEach((repo) => {
+      this.setupRepositoryListeners(context, repo)
+    })
+
+    this.refresh()
+  }
+
+  private setupRepositoryListenersOnly(repo: Repository) {
+    const repoPath = repo.rootUri.fsPath
+    if (this._repoDisposables.has(repoPath)) return
+    const disposable = repo.state.onDidChange(() => this.refresh())
+    this._repoDisposables.set(repoPath, [disposable])
+  }
+
+  private disposeRepositoryOnly(repo: Repository) {
+    const repoPath = repo.rootUri.fsPath
+    const disposables = this._repoDisposables.get(repoPath)
+    if (disposables) {
+      disposables.forEach((d) => d.dispose())
+      this._repoDisposables.delete(repoPath)
     }
+  }
+
+  private setupRepositoryListeners(context: vscode.ExtensionContext, repo: Repository) {
+    this.setupRepositoryListenersOnly(repo)
+    const repoPath = repo.rootUri.fsPath
+
+    const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(repo.rootUri, '.git'))
+
+    watcher.onDidCreate(async () => {
+      if (this._api) {
+        await vscode.commands.executeCommand('git.refresh')
+        const repoUpdated = this._api.repositories.find((r) => r.rootUri.fsPath === repoPath)
+        if (repoUpdated) {
+          this.setupRepositoryListenersOnly(repoUpdated)
+        }
+      }
+      this.refresh()
+    })
+
+    watcher.onDidDelete(() => {
+      this.disposeRepositoryOnly(repo)
+      this.clear()
+    })
+
+    context.subscriptions.push(watcher)
+  }
+
+  private disposeRepository(repo: Repository) {
+    this.disposeRepositoryOnly(repo)
+    if (this._repoDisposables.size === 0) {
+      this.clear()
+    }
+  }
+
+  private clear() {
+    this._state = {}
+    this._onDidChangeData.fire({})
   }
 
   public get state(): GitData {
     return this._state
   }
 
-  async refresh() {
-    if (!this._api) {
-      this._onDidChangeData.fire({})
+  public async refresh() {
+    const workspaceFolders = vscode.workspace.workspaceFolders
+    if (!workspaceFolders) {
+      this.clear()
       return
     }
-    const repository = this._api.repositories[0]
+    try {
+      await vscode.workspace.fs.stat(vscode.Uri.file(join(workspaceFolders[0].uri.fsPath, '.git')))
+    } catch {
+      this.clear()
+      return
+    }
+
+    if (!this._api) {
+      this.clear()
+      return
+    }
+
+    const repository: Repository | undefined = this._api.repositories[0]
     if (!repository) {
       this._state = {}
       this._onDidChangeData.fire({})

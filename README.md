@@ -37,6 +37,12 @@ This extension contributes the following settings/views:
 
 ## Release Notes
 
+### 1.4.2
+
+- The welcome panels have been removed, as VS Code's Source Control feature already handles this.
+- A `Copy to Clipboard` feature was added for `user.name` and `user.email` in the Status panel.
+- Updated internal memory management with listeners/disposables.
+
 ### 1.4.1
 
 - A welcome panel has been added for cases where Git is not initialized, offering the option to do so.
