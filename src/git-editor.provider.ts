@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import { Contexts, Icons, Keys, Options, ValueNotConfigured } from './constants'
+import { Contexts, Icons, Keys, Options, Text } from './constants'
 import { GitRepositoryService } from './git-repository.service'
 
 class GitItem extends vscode.TreeItem {
@@ -19,8 +19,6 @@ class GitItem extends vscode.TreeItem {
     if (key) this.contextValue = context
   }
 }
-
-const ERROR_ITEM = new GitItem('Warning', 'Git extension not available', 'warning', vscode.TreeItemCollapsibleState.None)
 
 export class GitEditorProvider implements vscode.TreeDataProvider<GitItem> {
   constructor(private service: GitRepositoryService) {
@@ -47,7 +45,7 @@ export class GitEditorProvider implements vscode.TreeDataProvider<GitItem> {
 
     const state = this.service.state
     if (Object.keys(state).length === 0) {
-      return []
+      return [new GitItem('Warning', Text.GitNotAvailable, 'warning', vscode.TreeItemCollapsibleState.None)]
     }
 
     let localUserName: string | undefined = undefined
@@ -66,21 +64,21 @@ export class GitEditorProvider implements vscode.TreeDataProvider<GitItem> {
     let globalFetchPrune: string | undefined = undefined
 
     try {
-      localUserName = state.localUserName || ValueNotConfigured
-      localUserEmail = state.localUserEmail || ValueNotConfigured
-      localCoreIgnoreCase = state.localCoreIgnoreCase || ValueNotConfigured
-      localPullRebase = state.localPullRebase || ValueNotConfigured
-      localRerereEnabled = state.localRerereEnabled || ValueNotConfigured
-      localCoreAutoCrLf = state.localCoreAutoCrLf || ValueNotConfigured
-      localFetchPrune = state.localFetchPrune || ValueNotConfigured
+      localUserName = state.localUserName || Text.NotConfigured
+      localUserEmail = state.localUserEmail || Text.NotConfigured
+      localCoreIgnoreCase = state.localCoreIgnoreCase || Text.NotConfigured
+      localPullRebase = state.localPullRebase || Text.NotConfigured
+      localRerereEnabled = state.localRerereEnabled || Text.NotConfigured
+      localCoreAutoCrLf = state.localCoreAutoCrLf || Text.NotConfigured
+      localFetchPrune = state.localFetchPrune || Text.NotConfigured
 
-      globalUserName = state.globalUserName || ValueNotConfigured
-      globalUserEmail = state.globalUserEmail || ValueNotConfigured
-      globalCoreIgnoreCase = state.globalCoreIgnoreCase || ValueNotConfigured
-      globalPullRebase = state.globalPullRebase || ValueNotConfigured
-      globalRerereEnabled = state.globalRerereEnabled || ValueNotConfigured
-      globalCoreAutoCrLf = state.globalCoreAutoCrLf || ValueNotConfigured
-      globalFetchPrune = state.globalFetchPrune || ValueNotConfigured
+      globalUserName = state.globalUserName || Text.NotConfigured
+      globalUserEmail = state.globalUserEmail || Text.NotConfigured
+      globalCoreIgnoreCase = state.globalCoreIgnoreCase || Text.NotConfigured
+      globalPullRebase = state.globalPullRebase || Text.NotConfigured
+      globalRerereEnabled = state.globalRerereEnabled || Text.NotConfigured
+      globalCoreAutoCrLf = state.globalCoreAutoCrLf || Text.NotConfigured
+      globalFetchPrune = state.globalFetchPrune || Text.NotConfigured
     } catch (e) {
       // Silent failure
     }

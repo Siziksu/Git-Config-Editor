@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { join } from 'path'
-import { Commands, ValueNotConfigured } from './constants'
+import { Commands, Text } from './constants'
 import { GitRepositoryService } from './git-repository.service'
 import { GitStatusProvider } from './git-status.provider'
 import { GitEditorProvider } from './git-editor.provider'
@@ -10,12 +10,6 @@ type LocalGlobal = 'local' | 'global'
 
 export function activate(context: vscode.ExtensionContext) {
   const service = new GitRepositoryService()
-
-  if (Object.keys(service.state).length === 0) {
-    vscode.commands.executeCommand('setContext', 'git-config-info.gitNotInitialized', true)
-  } else {
-    vscode.commands.executeCommand('setContext', 'git-config-info.gitNotInitialized', false)
-  }
 
   const statusProvider = new GitStatusProvider(service)
   const editorProvider = new GitEditorProvider(service)
@@ -63,7 +57,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   function registerEdit(commandId: string, scope: LocalGlobal) {
     return vscode.commands.registerCommand(commandId, async (item: any) => {
-      const value = !item.description ? '' : item.description === ValueNotConfigured ? '' : item.description
+      const value = !item.description ? '' : item.description === Text.NotConfigured ? '' : item.description
       if (!item || !item.key) return
       const input = await vscode.window.showInputBox({
         title: 'Git Editor: Change Value',
@@ -141,7 +135,7 @@ export function activate(context: vscode.ExtensionContext) {
         await vscode.window.showTextDocument(document, { preview: false })
       } catch (error) {
         if (error instanceof Error) {
-          vscode.window.showWarningMessage(`Git extension not available.`)
+          vscode.window.showWarningMessage(Text.GitNotAvailable)
         } else {
           vscode.window.showErrorMessage('Unknown error occurred while trying to open .git/config.')
         }

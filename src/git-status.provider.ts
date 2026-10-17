@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
-import { Icons, Keys, ValueNotConfigured } from './constants'
+import { Icons, Keys, Text } from './constants'
 import { GitRepositoryService } from './git-repository.service'
-import { commandOpenInBrowser } from './functions'
+import { commandCopyToClipboard, commandOpenInBrowser } from './functions'
 
 class GitItem extends vscode.TreeItem {
   constructor(
@@ -17,8 +17,6 @@ class GitItem extends vscode.TreeItem {
     if (icon) this.iconPath = new vscode.ThemeIcon(icon)
   }
 }
-
-const ERROR_ITEM = new GitItem('Warning', 'Git extension not available', 'warning', vscode.TreeItemCollapsibleState.None)
 
 export class GitStatusProvider implements vscode.TreeDataProvider<GitItem> {
   constructor(private service: GitRepositoryService) {
@@ -45,7 +43,7 @@ export class GitStatusProvider implements vscode.TreeDataProvider<GitItem> {
 
     const state = this.service.state
     if (Object.keys(state).length === 0) {
-      return []
+      return [new GitItem('Warning', Text.GitNotAvailable, 'warning', vscode.TreeItemCollapsibleState.None)]
     }
 
     let userName: string | undefined = undefined
@@ -60,16 +58,16 @@ export class GitStatusProvider implements vscode.TreeDataProvider<GitItem> {
     let web: string | undefined = undefined
 
     try {
-      userName = state.localUserName || state.globalUserName || ValueNotConfigured
-      userEmail = state.localUserEmail || state.globalUserEmail || ValueNotConfigured
-      coreIgnoreCase = state.localCoreIgnoreCase || state.globalCoreIgnoreCase || state.systemCoreIgnoreCase || ValueNotConfigured
-      pullRebase = state.localPullRebase || state.globalPullRebase || state.systemPullRebase || ValueNotConfigured
-      rerereEnabled = state.localRerereEnabled || state.globalRerereEnabled || state.systemRerereEnabled || ValueNotConfigured
-      coreAutoCrLf = state.localCoreAutoCrLf || state.globalCoreAutoCrLf || state.systemCoreAutoCrLf || ValueNotConfigured
-      fetchPrune = state.localFetchPrune || state.globalFetchPrune || state.systemFetchPrune || ValueNotConfigured
-      branch = state.branch || ValueNotConfigured
-      remote = state.remote || ValueNotConfigured
-      web = state.web || ValueNotConfigured
+      userName = state.localUserName || state.globalUserName || Text.NotConfigured
+      userEmail = state.localUserEmail || state.globalUserEmail || Text.NotConfigured
+      coreIgnoreCase = state.localCoreIgnoreCase || state.globalCoreIgnoreCase || state.systemCoreIgnoreCase || Text.NotConfigured
+      pullRebase = state.localPullRebase || state.globalPullRebase || state.systemPullRebase || Text.NotConfigured
+      rerereEnabled = state.localRerereEnabled || state.globalRerereEnabled || state.systemRerereEnabled || Text.NotConfigured
+      coreAutoCrLf = state.localCoreAutoCrLf || state.globalCoreAutoCrLf || state.systemCoreAutoCrLf || Text.NotConfigured
+      fetchPrune = state.localFetchPrune || state.globalFetchPrune || state.systemFetchPrune || Text.NotConfigured
+      branch = state.branch || Text.NotConfigured
+      remote = state.remote || Text.NotConfigured
+      web = state.web || Text.NotConfigured
     } catch (e) {
       // Silent failure
     }
@@ -87,8 +85,22 @@ export class GitStatusProvider implements vscode.TreeDataProvider<GitItem> {
     ]
 
     const configChildren = [
-      new GitItem('User', userName, Icons.Account, vscode.TreeItemCollapsibleState.None, Keys.UserName),
-      new GitItem('Email', userEmail, Icons.Mail, vscode.TreeItemCollapsibleState.None, Keys.UserEmail),
+      new GitItem(
+        'User',
+        userName,
+        Icons.Account,
+        vscode.TreeItemCollapsibleState.None,
+        Text.CopyToClipboard,
+        commandCopyToClipboard(userName)
+      ),
+      new GitItem(
+        'Email',
+        userEmail,
+        Icons.Mail,
+        vscode.TreeItemCollapsibleState.None,
+        Text.CopyToClipboard,
+        commandCopyToClipboard(userEmail)
+      ),
       new GitItem('Ignore Case', coreIgnoreCase, Icons.Item, vscode.TreeItemCollapsibleState.None, Keys.CoreIgnoreCase),
       new GitItem('Pull Rebase', pullRebase, Icons.Item, vscode.TreeItemCollapsibleState.None, Keys.PullRebase),
       new GitItem('Rerere', rerereEnabled, Icons.Item, vscode.TreeItemCollapsibleState.None, Keys.RerereEnabled),

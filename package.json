@@ -2,7 +2,7 @@
   "name": "git-config-info",
   "displayName": "Git Editor",
   "description": "Displays and edits Git information for the current project",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "publisher": "siziksu",
   "icon": "images/icon.png",
   "repository": {
@@ -55,8 +55,8 @@
         "icon": "$(pencil)"
       },
       {
-        "command": "git-config-info.deleteCommand",
-        "title": "Delete value",
+        "command": "git-config-info.unsetCommand",
+        "title": "Unset value",
         "icon": "$(trash)"
       },
       {
@@ -75,8 +75,8 @@
         "icon": "$(pencil)"
       },
       {
-        "command": "git-config-info.deleteGlobalCommand",
-        "title": "Delete value",
+        "command": "git-config-info.unsetGlobalCommand",
+        "title": "Unset value",
         "icon": "$(trash)"
       }
     ],
@@ -103,18 +103,6 @@
         }
       ]
     },
-    "viewsWelcome": [
-      {
-        "view": "viewGitStatus",
-        "contents": "No Git repository has been detected in this workspace.\n[Initialize Repository](command:git-config-info.gitInitCommand)",
-        "when": "git-config-info.gitNotInitialized"
-      },
-      {
-        "view": "viewGitEditor",
-        "contents": "No Git repository has been detected in this workspace.\n[Initialize Repository](command:git-config-info.gitInitCommand)",
-        "when": "git-config-info.gitNotInitialized"
-      }
-    ],
     "menus": {
       "commandPalette": [
         {
@@ -134,7 +122,7 @@
           "when": "false"
         },
         {
-          "command": "git-config-info.deleteCommand",
+          "command": "git-config-info.unsetCommand",
           "when": "false"
         },
         {
@@ -150,7 +138,7 @@
           "when": "false"
         },
         {
-          "command": "git-config-info.deleteGlobalCommand",
+          "command": "git-config-info.unsetGlobalCommand",
           "when": "false"
         }
       ],
@@ -183,7 +171,7 @@
           "group": "inline@1"
         },
         {
-          "command": "git-config-info.deleteCommand",
+          "command": "git-config-info.unsetCommand",
           "when": "view == viewGitEditor && viewItem == ContextToggle",
           "group": "inline@2"
         },
@@ -193,7 +181,7 @@
           "group": "inline@1"
         },
         {
-          "command": "git-config-info.deleteCommand",
+          "command": "git-config-info.unsetCommand",
           "when": "view == viewGitEditor && viewItem == ContextSelect",
           "group": "inline@2"
         },
@@ -203,7 +191,7 @@
           "group": "inline@1"
         },
         {
-          "command": "git-config-info.deleteCommand",
+          "command": "git-config-info.unsetCommand",
           "when": "view == viewGitEditor && viewItem == ContextEdit",
           "group": "inline@2"
         },
@@ -213,7 +201,7 @@
           "group": "inline@1"
         },
         {
-          "command": "git-config-info.deleteGlobalCommand",
+          "command": "git-config-info.unsetGlobalCommand",
           "when": "view == viewGitEditor && viewItem == ContextToggleGlobal",
           "group": "inline@2"
         },
@@ -223,7 +211,7 @@
           "group": "inline@1"
         },
         {
-          "command": "git-config-info.deleteGlobalCommand",
+          "command": "git-config-info.unsetGlobalCommand",
           "when": "view == viewGitEditor && viewItem == ContextSelectGlobal",
           "group": "inline@2"
         },
@@ -233,7 +221,7 @@
           "group": "inline@1"
         },
         {
-          "command": "git-config-info.deleteGlobalCommand",
+          "command": "git-config-info.unsetGlobalCommand",
           "when": "view == viewGitEditor && viewItem == ContextEditGlobal",
           "group": "inline@2"
         }

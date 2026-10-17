@@ -1,9 +1,13 @@
-export const ValueNotConfigured = 'Not configured'
+export const Text = {
+  NotConfigured: 'Not configured',
+  CopyToClipboard: 'Click to Copy to Clipboard',
+  GitNotAvailable: 'Git not initialized'
+}
 
 export const Commands = {
   CopyToClipboard: 'git-config-info.copyToClipboard',
-  Delete: 'git-config-info.deleteCommand',
-  DeleteGlobal: 'git-config-info.deleteGlobalCommand',
+  Delete: 'git-config-info.unsetCommand',
+  DeleteGlobal: 'git-config-info.unsetGlobalCommand',
   Edit: 'git-config-info.editCommand',
   EditGlobal: 'git-config-info.editGlobalCommand',
   GitInit: 'git-config-info.gitInitCommand',

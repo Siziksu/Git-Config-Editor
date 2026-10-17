@@ -13,10 +13,10 @@ export function commandOpenInBrowser(args: any[]): vscode.Command {
   }
 }
 
-export function commandCopyToClipboard(args: any[]): vscode.Command {
+export function commandCopyToClipboard(text: string | undefined): vscode.Command {
   return {
     command: Commands.CopyToClipboard,
     title: 'Copy to Clipboard',
-    arguments: args
+    arguments: [text]
   }
 }
