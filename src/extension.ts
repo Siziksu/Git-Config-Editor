@@ -1,18 +1,26 @@
 import * as vscode from 'vscode'
 import { join } from 'path'
-import { execFileAsync, Commands, ValueNotConfigured } from './constants'
+import { Commands, ValueNotConfigured } from './constants'
 import { GitRepositoryService } from './git-repository.service'
-import { GitInfoProvider } from './git-info.provider'
+import { GitStatusProvider } from './git-status.provider'
 import { GitEditorProvider } from './git-editor.provider'
+import { execFileAsync } from './functions'
 
 type LocalGlobal = 'local' | 'global'
 
 export function activate(context: vscode.ExtensionContext) {
   const service = new GitRepositoryService()
-  const infoProvider = new GitInfoProvider(service)
+
+  if (Object.keys(service.state).length === 0) {
+    vscode.commands.executeCommand('setContext', 'git-config-info.gitNotInitialized', true)
+  } else {
+    vscode.commands.executeCommand('setContext', 'git-config-info.gitNotInitialized', false)
+  }
+
+  const statusProvider = new GitStatusProvider(service)
   const editorProvider = new GitEditorProvider(service)
 
-  vscode.window.registerTreeDataProvider('viewGitInfo', infoProvider)
+  vscode.window.registerTreeDataProvider('viewGitStatus', statusProvider)
   vscode.window.registerTreeDataProvider('viewGitEditor', editorProvider)
 
   async function saveGitConfig(key: string, value: string, scope: LocalGlobal) {
@@ -89,25 +97,38 @@ export function activate(context: vscode.ExtensionContext) {
 
         await service.refresh()
       } catch (error: any) {
-        const msg = error instanceof Error ? error.message : 'Unknown error'
         vscode.window.showErrorMessage(`Key already unset`)
       }
     })
   }
 
   context.subscriptions.push(
-    registerToggle(Commands.Toggle.Command, 'local'),
-    registerSelect(Commands.Select.Command, 'local'),
-    registerEdit(Commands.Edit.Command, 'local'),
-    registerDelete(Commands.Delete.Command, 'local'),
-    registerToggle(Commands.ToggleGlobal.Command, 'global'),
-    registerSelect(Commands.SelectGlobal.Command, 'global'),
-    registerEdit(Commands.EditGlobal.Command, 'global'),
-    registerDelete(Commands.DeleteGlobal.Command, 'global'),
+    vscode.commands.registerCommand(Commands.GitInit, async () => {
+      try {
+        const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
+        const options = workspaceFolder ? { cwd: workspaceFolder } : {}
 
-    vscode.commands.registerCommand(Commands.Refresh.Command, () => service.refresh()),
+        await execFileAsync('git', ['init'], options)
+        vscode.window.showInformationMessage(`Git repository initialized`)
 
-    vscode.commands.registerCommand(Commands.openGitFileCommand.Command, async () => {
+        await service.refresh()
+      } catch (error: any) {
+        vscode.window.showErrorMessage(`Error initializing the repository`)
+      }
+    }),
+
+    registerToggle(Commands.Toggle, 'local'),
+    registerSelect(Commands.Select, 'local'),
+    registerEdit(Commands.Edit, 'local'),
+    registerDelete(Commands.Delete, 'local'),
+    registerToggle(Commands.ToggleGlobal, 'global'),
+    registerSelect(Commands.SelectGlobal, 'global'),
+    registerEdit(Commands.EditGlobal, 'global'),
+    registerDelete(Commands.DeleteGlobal, 'global'),
+
+    vscode.commands.registerCommand(Commands.Refresh, () => service.refresh()),
+
+    vscode.commands.registerCommand(Commands.OpenGitFileCommand, async () => {
       const workspaceFolders = vscode.workspace.workspaceFolders
       if (!workspaceFolders) {
         vscode.window.showErrorMessage('There is no open workspace.')
@@ -127,7 +148,7 @@ export function activate(context: vscode.ExtensionContext) {
       }
     }),
 
-    vscode.commands.registerCommand(Commands.CopyToClipboard.Command, async (value: string) => {
+    vscode.commands.registerCommand(Commands.CopyToClipboard, async (value: string) => {
       if (value && value !== 'Unknown' && value !== 'Not configured') {
         await vscode.env.clipboard.writeText(value)
         vscode.window.showInformationMessage(`Copied "${value}" to the clipboard.`)

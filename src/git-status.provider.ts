@@ -1,6 +1,7 @@
 import * as vscode from 'vscode'
-import { Commands, Icons, ValueNotConfigured, ValueUnknown } from './constants'
+import { Icons, Keys, ValueNotConfigured } from './constants'
 import { GitRepositoryService } from './git-repository.service'
+import { commandOpenInBrowser } from './functions'
 
 class GitItem extends vscode.TreeItem {
   constructor(
@@ -13,16 +14,13 @@ class GitItem extends vscode.TreeItem {
     public readonly children?: GitItem[]
   ) {
     super(label, collapsibleState)
-    this.description = description
     if (icon) this.iconPath = new vscode.ThemeIcon(icon)
-    if (tooltip) this.tooltip = tooltip
-    if (command) this.command = command
   }
 }
 
 const ERROR_ITEM = new GitItem('Warning', 'Git extension not available', 'warning', vscode.TreeItemCollapsibleState.None)
 
-export class GitInfoProvider implements vscode.TreeDataProvider<GitItem> {
+export class GitStatusProvider implements vscode.TreeDataProvider<GitItem> {
   constructor(private service: GitRepositoryService) {
     this.service.onDidChangeData(() => this._onDidChangeTreeData.fire())
   }
@@ -47,7 +45,7 @@ export class GitInfoProvider implements vscode.TreeDataProvider<GitItem> {
 
     const state = this.service.state
     if (Object.keys(state).length === 0) {
-      return [ERROR_ITEM]
+      return []
     }
 
     let userName: string | undefined = undefined
@@ -69,9 +67,9 @@ export class GitInfoProvider implements vscode.TreeDataProvider<GitItem> {
       rerereEnabled = state.localRerereEnabled || state.globalRerereEnabled || state.systemRerereEnabled || ValueNotConfigured
       coreAutoCrLf = state.localCoreAutoCrLf || state.globalCoreAutoCrLf || state.systemCoreAutoCrLf || ValueNotConfigured
       fetchPrune = state.localFetchPrune || state.globalFetchPrune || state.systemFetchPrune || ValueNotConfigured
-      branch = state.branch || ValueUnknown
-      remote = state.remote || ValueUnknown
-      web = state.web || ValueUnknown
+      branch = state.branch || ValueNotConfigured
+      remote = state.remote || ValueNotConfigured
+      web = state.web || ValueNotConfigured
     } catch (e) {
       // Silent failure
     }
@@ -83,25 +81,19 @@ export class GitInfoProvider implements vscode.TreeDataProvider<GitItem> {
         Icons.Globe,
         vscode.TreeItemCollapsibleState.None,
         web ?? remote,
-        remote
-          ? {
-              command: web ? Commands.OpenInBrowser.Command : Commands.CopyToClipboard.Command,
-              title: web ? Commands.OpenInBrowser.Title : Commands.CopyToClipboard.Title,
-              arguments: [web ?? remote]
-            }
-          : undefined
+        web ? commandOpenInBrowser([web]) : undefined
       ),
       new GitItem('Branch', branch, Icons.GitBranch, vscode.TreeItemCollapsibleState.None)
     ]
 
     const configChildren = [
-      new GitItem('User', userName, Icons.Account, vscode.TreeItemCollapsibleState.None),
-      new GitItem('Email', userEmail, Icons.Mail, vscode.TreeItemCollapsibleState.None),
-      new GitItem('Ignore Case', coreIgnoreCase, Icons.Item, vscode.TreeItemCollapsibleState.None),
-      new GitItem('Pull Rebase', pullRebase, Icons.Item, vscode.TreeItemCollapsibleState.None),
-      new GitItem('Rerere', rerereEnabled, Icons.Item, vscode.TreeItemCollapsibleState.None),
-      new GitItem('Auto CrLf', coreAutoCrLf, Icons.Item, vscode.TreeItemCollapsibleState.None),
-      new GitItem('Fetch Prune', fetchPrune, Icons.Item, vscode.TreeItemCollapsibleState.None)
+      new GitItem('User', userName, Icons.Account, vscode.TreeItemCollapsibleState.None, Keys.UserName),
+      new GitItem('Email', userEmail, Icons.Mail, vscode.TreeItemCollapsibleState.None, Keys.UserEmail),
+      new GitItem('Ignore Case', coreIgnoreCase, Icons.Item, vscode.TreeItemCollapsibleState.None, Keys.CoreIgnoreCase),
+      new GitItem('Pull Rebase', pullRebase, Icons.Item, vscode.TreeItemCollapsibleState.None, Keys.PullRebase),
+      new GitItem('Rerere', rerereEnabled, Icons.Item, vscode.TreeItemCollapsibleState.None, Keys.RerereEnabled),
+      new GitItem('Auto CrLf', coreAutoCrLf, Icons.Item, vscode.TreeItemCollapsibleState.None, Keys.CoreAutoCrLf),
+      new GitItem('Fetch Prune', fetchPrune, Icons.Item, vscode.TreeItemCollapsibleState.None, Keys.FetchPrune)
     ]
 
     return [

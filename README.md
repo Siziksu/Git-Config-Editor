@@ -37,6 +37,12 @@ This extension contributes the following settings/views:
 
 ## Release Notes
 
+### 1.4.1
+
+- A welcome panel has been added for cases where Git is not initialized, offering the option to do so.
+- Updated UI.
+- Added the `Refresh` and `Open .git/confg` buttons to the Status panel.
+
 ### 1.4.0
 
 - Added 2 views, `Status` and `Editor`.

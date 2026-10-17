@@ -8,13 +8,13 @@ class GitItem extends vscode.TreeItem {
     public readonly description: string | undefined,
     public readonly icon: string | undefined,
     public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-    public readonly context?: string,
+    public readonly tooltip?: string,
     public readonly key?: string,
+    public readonly context?: string,
     public readonly options?: string[],
     public readonly children?: GitItem[]
   ) {
     super(label, collapsibleState)
-    this.description = description
     if (icon) this.iconPath = new vscode.ThemeIcon(icon)
     if (key) this.contextValue = context
   }
@@ -47,7 +47,7 @@ export class GitEditorProvider implements vscode.TreeDataProvider<GitItem> {
 
     const state = this.service.state
     if (Object.keys(state).length === 0) {
-      return [ERROR_ITEM]
+      return []
     }
 
     let localUserName: string | undefined = undefined
@@ -86,85 +86,141 @@ export class GitEditorProvider implements vscode.TreeDataProvider<GitItem> {
     }
 
     const configLocalChildren = [
-      new GitItem('User', localUserName, Icons.Account, vscode.TreeItemCollapsibleState.None, Contexts.Edit, Keys.UserName),
-      new GitItem('Email', localUserEmail, Icons.Mail, vscode.TreeItemCollapsibleState.None, Contexts.Edit, Keys.UserEmail),
+      new GitItem('User', localUserName, Icons.Account, vscode.TreeItemCollapsibleState.None, Keys.UserName, Keys.UserName, Contexts.Edit),
+      new GitItem('Email', localUserEmail, Icons.Mail, vscode.TreeItemCollapsibleState.None, Keys.UserEmail, Keys.UserEmail, Contexts.Edit),
       new GitItem(
         'Ignore Case',
         localCoreIgnoreCase,
         Icons.Item,
         vscode.TreeItemCollapsibleState.None,
-        Contexts.Toggle,
-        Keys.CoreIgnoreCase
+        Keys.CoreIgnoreCase,
+        Keys.CoreIgnoreCase,
+        Contexts.Toggle
       ),
-      new GitItem('Pull Rebase', localPullRebase, Icons.Item, vscode.TreeItemCollapsibleState.None, Contexts.Toggle, Keys.PullRebase),
-      new GitItem('Rerere', localRerereEnabled, Icons.Item, vscode.TreeItemCollapsibleState.None, Contexts.Toggle, Keys.RerereEnabled),
+      new GitItem(
+        'Pull Rebase',
+        localPullRebase,
+        Icons.Item,
+        vscode.TreeItemCollapsibleState.None,
+        Keys.PullRebase,
+        Keys.PullRebase,
+        Contexts.Toggle
+      ),
+      new GitItem(
+        'Rerere',
+        localRerereEnabled,
+        Icons.Item,
+        vscode.TreeItemCollapsibleState.None,
+        Keys.RerereEnabled,
+        Keys.RerereEnabled,
+        Contexts.Toggle
+      ),
       new GitItem(
         'Auto CrLf',
         localCoreAutoCrLf,
         Icons.Item,
         vscode.TreeItemCollapsibleState.None,
-        Contexts.Select,
         Keys.CoreAutoCrLf,
+        Keys.CoreAutoCrLf,
+        Contexts.Select,
         Options.CoreAutoCrLf
       ),
-      new GitItem('Fetch Prune', localFetchPrune, Icons.Item, vscode.TreeItemCollapsibleState.None, Contexts.Toggle, Keys.FetchPrune)
+      new GitItem(
+        'Fetch Prune',
+        localFetchPrune,
+        Icons.Item,
+        vscode.TreeItemCollapsibleState.None,
+        Keys.FetchPrune,
+        Keys.FetchPrune,
+        Contexts.Toggle
+      )
     ]
 
     const configGlobalChildren = [
-      new GitItem('User', globalUserName, Icons.Account, vscode.TreeItemCollapsibleState.None, Contexts.EditGlobal, Keys.UserName),
-      new GitItem('Email', globalUserEmail, Icons.Mail, vscode.TreeItemCollapsibleState.None, Contexts.EditGlobal, Keys.UserEmail),
+      new GitItem(
+        'User',
+        globalUserName,
+        Icons.Account,
+        vscode.TreeItemCollapsibleState.None,
+        Keys.UserName,
+        Keys.UserName,
+        Contexts.EditGlobal
+      ),
+      new GitItem(
+        'Email',
+        globalUserEmail,
+        Icons.Mail,
+        vscode.TreeItemCollapsibleState.None,
+        Keys.UserEmail,
+        Keys.UserEmail,
+        Contexts.EditGlobal
+      ),
       new GitItem(
         'Ignore Case',
         globalCoreIgnoreCase,
         Icons.Item,
         vscode.TreeItemCollapsibleState.None,
-        Contexts.ToggleGlobal,
-        Keys.CoreIgnoreCase
+        Keys.CoreIgnoreCase,
+        Keys.CoreIgnoreCase,
+        Contexts.ToggleGlobal
       ),
       new GitItem(
         'Pull Rebase',
         globalPullRebase,
         Icons.Item,
         vscode.TreeItemCollapsibleState.None,
-        Contexts.ToggleGlobal,
-        Keys.PullRebase
+        Keys.PullRebase,
+        Keys.PullRebase,
+        Contexts.ToggleGlobal
       ),
       new GitItem(
         'Rerere',
         globalRerereEnabled,
         Icons.Item,
         vscode.TreeItemCollapsibleState.None,
-        Contexts.ToggleGlobal,
-        Keys.RerereEnabled
+        Keys.RerereEnabled,
+        Keys.RerereEnabled,
+        Contexts.ToggleGlobal
       ),
       new GitItem(
         'Auto CrLf',
         globalCoreAutoCrLf,
         Icons.Item,
         vscode.TreeItemCollapsibleState.None,
-        Contexts.SelectGlobal,
         Keys.CoreAutoCrLf,
+        Keys.CoreAutoCrLf,
+        Contexts.SelectGlobal,
         Options.CoreAutoCrLf
       ),
-      new GitItem('Fetch Prune', globalFetchPrune, Icons.Item, vscode.TreeItemCollapsibleState.None, Contexts.ToggleGlobal, Keys.FetchPrune)
+      new GitItem(
+        'Fetch Prune',
+        globalFetchPrune,
+        Icons.Item,
+        vscode.TreeItemCollapsibleState.None,
+        Keys.FetchPrune,
+        Keys.FetchPrune,
+        Contexts.ToggleGlobal
+      )
     ]
 
     return [
       new GitItem(
-        'Local Git',
-        undefined,
+        'Local',
+        '.git/config',
         Icons.SettingsGear,
         vscode.TreeItemCollapsibleState.Expanded,
+        undefined,
         undefined,
         undefined,
         undefined,
         configLocalChildren
       ),
       new GitItem(
-        'Global Git',
-        undefined,
+        'Global',
+        '~/.gitconfig',
         Icons.SettingsGear,
         vscode.TreeItemCollapsibleState.Expanded,
+        undefined,
         undefined,
         undefined,
         undefined,

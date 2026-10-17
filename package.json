@@ -2,7 +2,7 @@
   "name": "git-config-info",
   "displayName": "Git Editor",
   "description": "Displays and edits Git information for the current project",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "publisher": "siziksu",
   "icon": "images/icon.png",
   "repository": {
@@ -24,6 +24,10 @@
   "contributes": {
     "commands": [
       {
+        "command": "git-config-info.gitInitCommand",
+        "title": "Initialize Repository"
+      },
+      {
         "command": "git-config-info.refreshViewCommand",
         "title": "Refresh",
         "category": "Siziksu Git Editor",
@@ -31,56 +35,48 @@
       },
       {
         "command": "git-config-info.openGitFileCommand",
-        "title": "Open Local Git Config File",
+        "title": "Open .git/config",
         "category": "Siziksu Git Editor",
         "icon": "$(code)"
       },
       {
         "command": "git-config-info.toggleCommand",
         "title": "Toggle value",
-        "category": "Siziksu Git Editor",
         "icon": "$(sync)"
       },
       {
         "command": "git-config-info.selectCommand",
         "title": "Select value",
-        "category": "Siziksu Git Editor",
         "icon": "$(list-selection)"
       },
       {
         "command": "git-config-info.editCommand",
         "title": "Edit value",
-        "category": "Siziksu Git Editor",
         "icon": "$(pencil)"
       },
       {
         "command": "git-config-info.deleteCommand",
         "title": "Delete value",
-        "category": "Siziksu Git Editor",
         "icon": "$(trash)"
       },
       {
         "command": "git-config-info.toggleGlobalCommand",
         "title": "Toggle value",
-        "category": "Siziksu Git Editor",
         "icon": "$(sync)"
       },
       {
         "command": "git-config-info.selectGlobalCommand",
         "title": "Select value",
-        "category": "Siziksu Git Editor",
         "icon": "$(list-selection)"
       },
       {
         "command": "git-config-info.editGlobalCommand",
         "title": "Edit value",
-        "category": "Siziksu Git Editor",
         "icon": "$(pencil)"
       },
       {
         "command": "git-config-info.deleteGlobalCommand",
         "title": "Delete value",
-        "category": "Siziksu Git Editor",
         "icon": "$(trash)"
       }
     ],
@@ -96,7 +92,7 @@
     "views": {
       "activityBarGitEditor": [
         {
-          "id": "viewGitInfo",
+          "id": "viewGitStatus",
           "name": "Status",
           "icon": "$(github)"
         },
@@ -107,8 +103,24 @@
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "viewGitStatus",
+        "contents": "No Git repository has been detected in this workspace.\n[Initialize Repository](command:git-config-info.gitInitCommand)",
+        "when": "git-config-info.gitNotInitialized"
+      },
+      {
+        "view": "viewGitEditor",
+        "contents": "No Git repository has been detected in this workspace.\n[Initialize Repository](command:git-config-info.gitInitCommand)",
+        "when": "git-config-info.gitNotInitialized"
+      }
+    ],
     "menus": {
       "commandPalette": [
+        {
+          "command": "git-config-info.gitInitCommand",
+          "when": "false"
+        },
         {
           "command": "git-config-info.toggleCommand",
           "when": "false"
@@ -143,6 +155,16 @@
         }
       ],
       "view/title": [
+        {
+          "command": "git-config-info.openGitFileCommand",
+          "when": "view == viewGitStatus",
+          "group": "navigation"
+        },
+        {
+          "command": "git-config-info.refreshViewCommand",
+          "when": "view == viewGitStatus",
+          "group": "navigation"
+        },
         {
           "command": "git-config-info.openGitFileCommand",
           "when": "view == viewGitEditor",

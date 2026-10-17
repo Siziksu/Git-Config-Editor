@@ -1,6 +1,7 @@
 import * as vscode from 'vscode'
 import { GitExtension, API } from './git'
-import { execFileAsync, Keys } from './constants'
+import { Keys } from './constants'
+import { execFileAsync } from './functions'
 
 export interface GitData {
   remote?: string

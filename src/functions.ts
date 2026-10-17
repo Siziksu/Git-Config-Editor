@@ -1,0 +1,22 @@
+import * as vscode from 'vscode'
+import { execFile } from 'child_process'
+import { promisify } from 'util'
+import { Commands } from './constants'
+
+export const execFileAsync = promisify(execFile)
+
+export function commandOpenInBrowser(args: any[]): vscode.Command {
+  return {
+    command: Commands.OpenInBrowser,
+    title: 'Open in Browser',
+    arguments: args
+  }
+}
+
+export function commandCopyToClipboard(args: any[]): vscode.Command {
+  return {
+    command: Commands.CopyToClipboard,
+    title: 'Copy to Clipboard',
+    arguments: args
+  }
+}
