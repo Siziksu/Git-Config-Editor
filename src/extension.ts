@@ -9,10 +9,10 @@ import { execFileAsync } from './functions'
 type LocalGlobal = 'local' | 'global'
 
 export function activate(context: vscode.ExtensionContext) {
-  const service = new GitRepositoryService()
+  const service = new GitRepositoryService(context)
 
-  const statusProvider = new GitStatusProvider(service)
-  const editorProvider = new GitEditorProvider(service)
+  const statusProvider = new GitStatusProvider(context, service)
+  const editorProvider = new GitEditorProvider(context, service)
 
   vscode.window.registerTreeDataProvider('viewGitStatus', statusProvider)
   vscode.window.registerTreeDataProvider('viewGitEditor', editorProvider)

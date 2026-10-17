@@ -19,14 +19,22 @@ class GitItem extends vscode.TreeItem {
 }
 
 export class GitStatusProvider implements vscode.TreeDataProvider<GitItem> {
-  constructor(private service: GitRepositoryService) {
-    this.service.onDidChangeData(() => this._onDidChangeTreeData.fire())
-  }
-
   private _onDidChangeTreeData: vscode.EventEmitter<GitItem | undefined | null | void> = new vscode.EventEmitter<
     GitItem | undefined | null | void
   >()
   readonly onDidChangeTreeData: vscode.Event<GitItem | undefined | null | void> = this._onDidChangeTreeData.event
+
+  constructor(
+    context: vscode.ExtensionContext,
+    private service: GitRepositoryService
+  ) {
+    context.subscriptions.push(
+      this.service.onDidChangeData(() => {
+        this.refresh()
+      }),
+      this._onDidChangeTreeData
+    )
+  }
 
   refresh(): void {
     this._onDidChangeTreeData.fire()
