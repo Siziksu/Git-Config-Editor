@@ -1,7 +1,9 @@
 import * as vscode from 'vscode'
+import os from 'os'
 import { join } from 'path'
 import { Commands, Text } from './constants'
 import { GitRepositoryService } from './git-repository.service'
+import { GitFilesProvider } from './git-files.provider'
 import { GitStatusProvider } from './git-status.provider'
 import { GitEditorProvider } from './git-editor.provider'
 import { execFileAsync } from './functions'
@@ -11,9 +13,11 @@ type LocalGlobal = 'local' | 'global'
 export function activate(context: vscode.ExtensionContext) {
   const service = new GitRepositoryService(context)
 
+  const filesProvider = new GitFilesProvider()
   const statusProvider = new GitStatusProvider(context, service)
   const editorProvider = new GitEditorProvider(context, service)
 
+  vscode.window.registerTreeDataProvider('viewGitFiles', filesProvider)
   vscode.window.registerTreeDataProvider('viewGitStatus', statusProvider)
   vscode.window.registerTreeDataProvider('viewGitEditor', editorProvider)
 
@@ -96,6 +100,36 @@ export function activate(context: vscode.ExtensionContext) {
     })
   }
 
+  function registerOpenFile(commandId: string, scope: LocalGlobal) {
+    return vscode.commands.registerCommand(commandId, async () => {
+      const workspaceFolders = vscode.workspace.workspaceFolders
+      if (!workspaceFolders) {
+        vscode.window.showErrorMessage('There is no open workspace.')
+        return
+      }
+      let file: vscode.Uri | undefined = undefined
+      if (scope === 'global') {
+        const homedir = os.homedir()
+        file = vscode.Uri.file(join(homedir, '.gitconfig'))
+      } else {
+        file = vscode.Uri.file(join(workspaceFolders[0].uri.fsPath, '.git', 'config'))
+      }
+      if (!file) return
+      try {
+        const document = await vscode.workspace.openTextDocument(file)
+        await vscode.window.showTextDocument(document, { preview: false })
+      } catch (error) {
+        if (error instanceof Error) {
+          vscode.window.showWarningMessage(scope === 'global' ? Text.GitNotAvailable : Text.GlobalGitNotAvailable)
+        } else {
+          vscode.window.showErrorMessage(
+            `Unknown error occurred while trying to open ${scope === 'global' ? Text.GlobalGitFile : Text.LocalGitFile}.`
+          )
+        }
+      }
+    })
+  }
+
   context.subscriptions.push(
     vscode.commands.registerCommand(Commands.GitInit, async () => {
       try {
@@ -112,35 +146,21 @@ export function activate(context: vscode.ExtensionContext) {
     }),
 
     registerToggle(Commands.Toggle, 'local'),
-    registerSelect(Commands.Select, 'local'),
-    registerEdit(Commands.Edit, 'local'),
-    registerDelete(Commands.Delete, 'local'),
     registerToggle(Commands.ToggleGlobal, 'global'),
+
+    registerSelect(Commands.Select, 'local'),
     registerSelect(Commands.SelectGlobal, 'global'),
+
+    registerEdit(Commands.Edit, 'local'),
     registerEdit(Commands.EditGlobal, 'global'),
+
+    registerDelete(Commands.Delete, 'local'),
     registerDelete(Commands.DeleteGlobal, 'global'),
 
     vscode.commands.registerCommand(Commands.Refresh, () => service.refresh()),
 
-    vscode.commands.registerCommand(Commands.OpenGitFileCommand, async () => {
-      const workspaceFolders = vscode.workspace.workspaceFolders
-      if (!workspaceFolders) {
-        vscode.window.showErrorMessage('There is no open workspace.')
-        return
-      }
-
-      const file = vscode.Uri.file(join(workspaceFolders[0].uri.fsPath, '.git', 'config'))
-      try {
-        const document = await vscode.workspace.openTextDocument(file)
-        await vscode.window.showTextDocument(document, { preview: false })
-      } catch (error) {
-        if (error instanceof Error) {
-          vscode.window.showWarningMessage(Text.GitNotAvailable)
-        } else {
-          vscode.window.showErrorMessage('Unknown error occurred while trying to open .git/config.')
-        }
-      }
-    }),
+    registerOpenFile(Commands.OpenGitFileCommand, 'local'),
+    registerOpenFile(Commands.OpenGitFileGlobalCommand, 'global'),
 
     vscode.commands.registerCommand(Commands.CopyToClipboard, async (value: string) => {
       if (value && value !== 'Unknown' && value !== 'Not configured') {

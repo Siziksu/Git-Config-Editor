@@ -1,7 +1,10 @@
 export const Text = {
   NotConfigured: 'Not configured',
   CopyToClipboard: 'Click to Copy to Clipboard',
-  GitNotAvailable: 'Git not initialized'
+  GitNotAvailable: 'Local Git file not available',
+  GlobalGitNotAvailable: 'Global Git file not available',
+  LocalGitFile: '.git/config',
+  GlobalGitFile: '~/.gitconfig'
 }
 
 export const Commands = {
@@ -12,6 +15,7 @@ export const Commands = {
   EditGlobal: 'git-config-info.editGlobalCommand',
   GitInit: 'git-config-info.gitInitCommand',
   OpenGitFileCommand: 'git-config-info.openGitFileCommand',
+  OpenGitFileGlobalCommand: 'git-config-info.openGitFileGlobalCommand',
   OpenInBrowser: 'vscode.open',
   Refresh: 'git-config-info.refreshViewCommand',
   Select: 'git-config-info.selectCommand',
@@ -43,7 +47,9 @@ export const Icons = {
   Gear: 'gear',
   SettingsGear: 'settings-gear',
   GitBranch: 'git-branch',
-  Item: 'dash'
+  Item: 'dash',
+  Repo: 'repo',
+  Warning: 'warning'
 }
 
 export const Contexts = {
@@ -53,4 +59,20 @@ export const Contexts = {
   ToggleGlobal: 'ContextToggleGlobal',
   SelectGlobal: 'ContextSelectGlobal',
   EditGlobal: 'ContextEditGlobal'
+}
+
+export const Labels = {
+  Remote: 'Remote',
+  User: 'User',
+  Email: 'Email',
+  IgnoreCase: 'Ignore Case',
+  PullRebase: 'Pull Rebase',
+  Rerere: 'Rerere',
+  AutoCrLf: 'Auto CrLf',
+  FetchPrune: 'Fetch Prune',
+  Repository: 'Repository',
+  Values: 'Values',
+  Local: 'Local',
+  Global: 'Global',
+  Warning: 'Warning'
 }

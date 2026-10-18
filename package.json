@@ -2,7 +2,7 @@
   "name": "git-config-info",
   "displayName": "Git Editor",
   "description": "Displays and edits Git information for the current project",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "publisher": "siziksu",
   "icon": "images/icon.png",
   "repository": {
@@ -36,6 +36,12 @@
       {
         "command": "git-config-info.openGitFileCommand",
         "title": "Open .git/config",
+        "category": "Siziksu Git Editor",
+        "icon": "$(code)"
+      },
+      {
+        "command": "git-config-info.openGitFileGlobalCommand",
+        "title": "Open ~/.gitconfig",
         "category": "Siziksu Git Editor",
         "icon": "$(code)"
       },
@@ -92,6 +98,12 @@
     "views": {
       "activityBarGitEditor": [
         {
+          "id": "viewGitFiles",
+          "name": "Files",
+          "icon": "$(github)",
+					"initialSize": 1
+        },
+        {
           "id": "viewGitStatus",
           "name": "Status",
           "icon": "$(github)"
@@ -144,18 +156,13 @@
       ],
       "view/title": [
         {
-          "command": "git-config-info.openGitFileCommand",
-          "when": "view == viewGitStatus",
+          "command": "git-config-info.refreshViewCommand",
+          "when": "view == viewGitFiles",
           "group": "navigation"
         },
         {
           "command": "git-config-info.refreshViewCommand",
           "when": "view == viewGitStatus",
-          "group": "navigation"
-        },
-        {
-          "command": "git-config-info.openGitFileCommand",
-          "when": "view == viewGitEditor",
           "group": "navigation"
         },
         {

@@ -1,14 +1,17 @@
 import * as vscode from 'vscode'
-import { Icons, Keys, Text } from './constants'
+import { Icons, Keys, Labels, Text } from './constants'
 import { GitRepositoryService } from './git-repository.service'
-import { commandCopyToClipboard, commandOpenInBrowser } from './functions'
+import { copyToClipboardCommand, openInBrowserCommand } from './functions'
+
+const None = vscode.TreeItemCollapsibleState.None
+const Expanded = vscode.TreeItemCollapsibleState.Expanded
 
 class GitItem extends vscode.TreeItem {
   constructor(
+    public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+    public readonly icon: string | undefined,
     public readonly label: string,
     public readonly description: string | undefined,
-    public readonly icon: string | undefined,
-    public readonly collapsibleState: vscode.TreeItemCollapsibleState,
     public readonly tooltip?: string,
     public readonly command?: vscode.Command,
     public readonly children?: GitItem[]
@@ -51,7 +54,7 @@ export class GitStatusProvider implements vscode.TreeDataProvider<GitItem> {
 
     const state = this.service.state
     if (Object.keys(state).length === 0) {
-      return [new GitItem('Warning', Text.GitNotAvailable, 'warning', vscode.TreeItemCollapsibleState.None)]
+      return [new GitItem(None, Icons.Warning, Labels.Warning, Text.GitNotAvailable)]
     }
 
     let userName: string | undefined = undefined
@@ -63,7 +66,7 @@ export class GitStatusProvider implements vscode.TreeDataProvider<GitItem> {
     let fetchPrune: string | undefined = undefined
     let branch: string | undefined = undefined
     let remote: string | undefined = undefined
-    let web: string | undefined = undefined
+    let url: string | undefined = undefined
 
     try {
       userName = state.localUserName || state.globalUserName || Text.NotConfigured
@@ -75,50 +78,29 @@ export class GitStatusProvider implements vscode.TreeDataProvider<GitItem> {
       fetchPrune = state.localFetchPrune || state.globalFetchPrune || state.systemFetchPrune || Text.NotConfigured
       branch = state.branch || Text.NotConfigured
       remote = state.remote || Text.NotConfigured
-      web = state.web || Text.NotConfigured
+      url = state.web
     } catch (e) {
       // Silent failure
     }
 
-    const repoChildren = [
-      new GitItem(
-        'Remote',
-        remote,
-        Icons.Globe,
-        vscode.TreeItemCollapsibleState.None,
-        web ?? remote,
-        web ? commandOpenInBrowser([web]) : undefined
-      ),
-      new GitItem('Branch', branch, Icons.GitBranch, vscode.TreeItemCollapsibleState.None)
+    const repositoryChildren = [
+      new GitItem(None, Icons.Globe, Labels.Remote, remote, url ?? remote, url ? openInBrowserCommand([url]) : undefined),
+      new GitItem(None, Icons.GitBranch, 'Branch', branch)
     ]
 
-    const configChildren = [
-      new GitItem(
-        'User',
-        userName,
-        Icons.Account,
-        vscode.TreeItemCollapsibleState.None,
-        Text.CopyToClipboard,
-        commandCopyToClipboard(userName)
-      ),
-      new GitItem(
-        'Email',
-        userEmail,
-        Icons.Mail,
-        vscode.TreeItemCollapsibleState.None,
-        Text.CopyToClipboard,
-        commandCopyToClipboard(userEmail)
-      ),
-      new GitItem('Ignore Case', coreIgnoreCase, Icons.Item, vscode.TreeItemCollapsibleState.None, Keys.CoreIgnoreCase),
-      new GitItem('Pull Rebase', pullRebase, Icons.Item, vscode.TreeItemCollapsibleState.None, Keys.PullRebase),
-      new GitItem('Rerere', rerereEnabled, Icons.Item, vscode.TreeItemCollapsibleState.None, Keys.RerereEnabled),
-      new GitItem('Auto CrLf', coreAutoCrLf, Icons.Item, vscode.TreeItemCollapsibleState.None, Keys.CoreAutoCrLf),
-      new GitItem('Fetch Prune', fetchPrune, Icons.Item, vscode.TreeItemCollapsibleState.None, Keys.FetchPrune)
+    const statusChildren = [
+      new GitItem(None, Icons.Account, Labels.User, userName, Text.CopyToClipboard, copyToClipboardCommand(userName)),
+      new GitItem(None, Icons.Mail, Labels.Email, userEmail, Text.CopyToClipboard, copyToClipboardCommand(userEmail)),
+      new GitItem(None, Icons.Item, Labels.IgnoreCase, coreIgnoreCase, Keys.CoreIgnoreCase),
+      new GitItem(None, Icons.Item, Labels.PullRebase, pullRebase, Keys.PullRebase),
+      new GitItem(None, Icons.Item, Labels.Rerere, rerereEnabled, Keys.RerereEnabled),
+      new GitItem(None, Icons.Item, Labels.AutoCrLf, coreAutoCrLf, Keys.CoreAutoCrLf),
+      new GitItem(None, Icons.Item, Labels.FetchPrune, fetchPrune, Keys.FetchPrune)
     ]
 
     return [
-      new GitItem('Repository', undefined, 'repo', vscode.TreeItemCollapsibleState.Expanded, undefined, undefined, repoChildren),
-      new GitItem('Values', undefined, Icons.SettingsGear, vscode.TreeItemCollapsibleState.Expanded, undefined, undefined, configChildren)
+      new GitItem(Expanded, Icons.Repo, Labels.Repository, undefined, undefined, undefined, repositoryChildren),
+      new GitItem(Expanded, Icons.SettingsGear, Labels.Values, undefined, undefined, undefined, statusChildren)
     ]
   }
 }

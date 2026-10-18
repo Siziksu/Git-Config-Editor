@@ -1,13 +1,16 @@
 import * as vscode from 'vscode'
-import { Contexts, Icons, Keys, Options, Text } from './constants'
+import { Contexts, Icons, Keys, Labels, Options, Text } from './constants'
 import { GitRepositoryService } from './git-repository.service'
+
+const None = vscode.TreeItemCollapsibleState.None
+const Expanded = vscode.TreeItemCollapsibleState.Expanded
 
 class GitItem extends vscode.TreeItem {
   constructor(
+    public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+    public readonly icon: string | undefined,
     public readonly label: string,
     public readonly description: string | undefined,
-    public readonly icon: string | undefined,
-    public readonly collapsibleState: vscode.TreeItemCollapsibleState,
     public readonly tooltip?: string,
     public readonly key?: string,
     public readonly context?: string,
@@ -53,7 +56,7 @@ export class GitEditorProvider implements vscode.TreeDataProvider<GitItem> {
 
     const state = this.service.state
     if (Object.keys(state).length === 0) {
-      return [new GitItem('Warning', Text.GitNotAvailable, 'warning', vscode.TreeItemCollapsibleState.None)]
+      return [new GitItem(None, Icons.Warning, Labels.Warning, Text.GitNotAvailable)]
     }
 
     let localUserName: string | undefined = undefined
@@ -92,129 +95,57 @@ export class GitEditorProvider implements vscode.TreeDataProvider<GitItem> {
     }
 
     const configLocalChildren = [
-      new GitItem('User', localUserName, Icons.Account, vscode.TreeItemCollapsibleState.None, Keys.UserName, Keys.UserName, Contexts.Edit),
-      new GitItem('Email', localUserEmail, Icons.Mail, vscode.TreeItemCollapsibleState.None, Keys.UserEmail, Keys.UserEmail, Contexts.Edit),
+      new GitItem(None, Icons.Account, Labels.User, localUserName, Keys.UserName, Keys.UserName, Contexts.Edit),
+      new GitItem(None, Icons.Mail, Labels.Email, localUserEmail, Keys.UserEmail, Keys.UserEmail, Contexts.Edit),
+      new GitItem(None, Icons.Item, Labels.IgnoreCase, localCoreIgnoreCase, Keys.CoreIgnoreCase, Keys.CoreIgnoreCase, Contexts.Toggle),
+      new GitItem(None, Icons.Item, Labels.PullRebase, localPullRebase, Keys.PullRebase, Keys.PullRebase, Contexts.Toggle),
+      new GitItem(None, Icons.Item, Labels.Rerere, localRerereEnabled, Keys.RerereEnabled, Keys.RerereEnabled, Contexts.Toggle),
       new GitItem(
-        'Ignore Case',
-        localCoreIgnoreCase,
+        None,
         Icons.Item,
-        vscode.TreeItemCollapsibleState.None,
-        Keys.CoreIgnoreCase,
-        Keys.CoreIgnoreCase,
-        Contexts.Toggle
-      ),
-      new GitItem(
-        'Pull Rebase',
-        localPullRebase,
-        Icons.Item,
-        vscode.TreeItemCollapsibleState.None,
-        Keys.PullRebase,
-        Keys.PullRebase,
-        Contexts.Toggle
-      ),
-      new GitItem(
-        'Rerere',
-        localRerereEnabled,
-        Icons.Item,
-        vscode.TreeItemCollapsibleState.None,
-        Keys.RerereEnabled,
-        Keys.RerereEnabled,
-        Contexts.Toggle
-      ),
-      new GitItem(
-        'Auto CrLf',
+        Labels.AutoCrLf,
         localCoreAutoCrLf,
-        Icons.Item,
-        vscode.TreeItemCollapsibleState.None,
         Keys.CoreAutoCrLf,
         Keys.CoreAutoCrLf,
         Contexts.Select,
         Options.CoreAutoCrLf
       ),
-      new GitItem(
-        'Fetch Prune',
-        localFetchPrune,
-        Icons.Item,
-        vscode.TreeItemCollapsibleState.None,
-        Keys.FetchPrune,
-        Keys.FetchPrune,
-        Contexts.Toggle
-      )
+      new GitItem(None, Icons.Item, Labels.FetchPrune, localFetchPrune, Keys.FetchPrune, Keys.FetchPrune, Contexts.Toggle)
     ]
 
     const configGlobalChildren = [
+      new GitItem(None, Icons.Account, Labels.User, globalUserName, Keys.UserName, Keys.UserName, Contexts.EditGlobal),
+      new GitItem(None, Icons.Mail, Labels.Email, globalUserEmail, Keys.UserEmail, Keys.UserEmail, Contexts.EditGlobal),
       new GitItem(
-        'User',
-        globalUserName,
-        Icons.Account,
-        vscode.TreeItemCollapsibleState.None,
-        Keys.UserName,
-        Keys.UserName,
-        Contexts.EditGlobal
-      ),
-      new GitItem(
-        'Email',
-        globalUserEmail,
-        Icons.Mail,
-        vscode.TreeItemCollapsibleState.None,
-        Keys.UserEmail,
-        Keys.UserEmail,
-        Contexts.EditGlobal
-      ),
-      new GitItem(
-        'Ignore Case',
+        None,
+        Icons.Item,
+        Labels.IgnoreCase,
         globalCoreIgnoreCase,
-        Icons.Item,
-        vscode.TreeItemCollapsibleState.None,
         Keys.CoreIgnoreCase,
         Keys.CoreIgnoreCase,
         Contexts.ToggleGlobal
       ),
+      new GitItem(None, Icons.Item, Labels.PullRebase, globalPullRebase, Keys.PullRebase, Keys.PullRebase, Contexts.ToggleGlobal),
+      new GitItem(None, Icons.Item, Labels.Rerere, globalRerereEnabled, Keys.RerereEnabled, Keys.RerereEnabled, Contexts.ToggleGlobal),
       new GitItem(
-        'Pull Rebase',
-        globalPullRebase,
+        None,
         Icons.Item,
-        vscode.TreeItemCollapsibleState.None,
-        Keys.PullRebase,
-        Keys.PullRebase,
-        Contexts.ToggleGlobal
-      ),
-      new GitItem(
-        'Rerere',
-        globalRerereEnabled,
-        Icons.Item,
-        vscode.TreeItemCollapsibleState.None,
-        Keys.RerereEnabled,
-        Keys.RerereEnabled,
-        Contexts.ToggleGlobal
-      ),
-      new GitItem(
-        'Auto CrLf',
+        Labels.AutoCrLf,
         globalCoreAutoCrLf,
-        Icons.Item,
-        vscode.TreeItemCollapsibleState.None,
         Keys.CoreAutoCrLf,
         Keys.CoreAutoCrLf,
         Contexts.SelectGlobal,
         Options.CoreAutoCrLf
       ),
-      new GitItem(
-        'Fetch Prune',
-        globalFetchPrune,
-        Icons.Item,
-        vscode.TreeItemCollapsibleState.None,
-        Keys.FetchPrune,
-        Keys.FetchPrune,
-        Contexts.ToggleGlobal
-      )
+      new GitItem(None, Icons.Item, Labels.FetchPrune, globalFetchPrune, Keys.FetchPrune, Keys.FetchPrune, Contexts.ToggleGlobal)
     ]
 
     return [
       new GitItem(
-        'Local',
-        '.git/config',
+        Expanded,
         Icons.SettingsGear,
-        vscode.TreeItemCollapsibleState.Expanded,
+        Labels.Local,
+        Text.LocalGitFile,
         undefined,
         undefined,
         undefined,
@@ -222,10 +153,10 @@ export class GitEditorProvider implements vscode.TreeDataProvider<GitItem> {
         configLocalChildren
       ),
       new GitItem(
-        'Global',
-        '~/.gitconfig',
+        Expanded,
         Icons.SettingsGear,
-        vscode.TreeItemCollapsibleState.Expanded,
+        Labels.Global,
+        Text.GlobalGitFile,
         undefined,
         undefined,
         undefined,

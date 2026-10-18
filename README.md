@@ -37,6 +37,11 @@ This extension contributes the following settings/views:
 
 ## Release Notes
 
+### 1.4.3
+
+- It is now possible to open the global Git file within the project.
+- A new view has been added for the two links that allow opening Git files within the project.
+
 ### 1.4.2
 
 - The welcome panels have been removed, as VS Code's Source Control feature already handles this.
